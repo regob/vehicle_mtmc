@@ -23,8 +23,8 @@ def play_video(path, duration="total", offset=0):
     """
 
     tmp_file = "/tmp/{}.mp4".format(str(time.time()).split('.')[1])
-    dur = [] if duration == "total" else ["-t", duration]
-    off = [] if offset == 0 else ["-ss", offset]
+    dur = [] if duration == "total" else ["-t", str(duration)]
+    off = [] if offset == 0 else ["-ss", str(offset)]
     params = ["ffmpeg", "-i", path] + dur + off + [tmp_file]
     sproc = subprocess.run(params)
 

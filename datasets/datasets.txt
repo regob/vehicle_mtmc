@@ -1,0 +1,53 @@
+
+==================================
+Datasets
+==================================
+
+model_id: [1, 177]
+color_id: [0, 11]
+type_id: [0, 10]
+car_id: unique number per identity per dataset
+serial: unique number per image per dataset
+
+
+Combined_Vehiclex_dataset ~370K, 1362 ids
+-----------------------------------------
+	AICity21 VehicleX data (192K)
+	VehicleID VehicleX data (113K)
+	VeRi VehicleX data (72K)
+
+naming: {color_id}_{type_id}_{car_id}_{serial}.jpg
+
+
+AIC21_Track2_ReID 85K, 880 ids
+--------------------------------
+3 spits: train, test, query
+labels in xml
+
+
+VeRi-Wild 416K, 37K ids
+------------------------
+BRAND + COLOR ANNOTATION
+
+
+VRIC 54K, 2.8K ids
+-------------------
++ 5.6K test images for 2.8K ids
+
+
+Gen_img 32K?
+------------
+naming: {color_id}_{type_id}_{model_id}_{serial}.jpg
+
+
+Gen_img_id 73K?
+----------------
+naming: {color_id}_{type_id}_{model_id}_{car_id}_{serial}.jpg
+
+
+
+		
+
+
+
+	

@@ -5,7 +5,9 @@ Datasets
 
 model_id: [1, 177]
 color_id: [0, 11]
+0 yellow 1 orange 2 green 3 gray 4 red 5 blue 6 white 7 golden 8 brown 9 black 10 purple 11 pink
 type_id: [0, 10]
+0 sedan 1 suv 2 van 3 hatchback 4 mpv 5 pickup 6 bus 7 truck 8 estate 9 sportscar 10 RV
 car_id: unique number per identity per dataset
 serial: unique number per image per dataset
 
@@ -45,9 +47,3 @@ Gen_img_id 73K?
 naming: {color_id}_{type_id}_{model_id}_{car_id}_{serial}.jpg
 
 
-
-		
-
-
-
-	

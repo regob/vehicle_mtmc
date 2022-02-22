@@ -3,4 +3,5 @@
 *.jpg
 *.png
 *.pt
-
+*.zip
+datasets/*/

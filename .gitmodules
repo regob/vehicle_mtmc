@@ -6,4 +6,4 @@
 	url = https://github.com/regob/AIC21-MTMC.git
 [submodule "VehicleX"]
 	path = VehicleX
-	url = git@github.com:regob/VehicleX.git
+	url = ../VehicleX

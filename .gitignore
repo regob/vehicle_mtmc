@@ -5,3 +5,4 @@
 *.pt
 *.zip
 datasets/*/
+__py*

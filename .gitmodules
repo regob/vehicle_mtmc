@@ -3,7 +3,7 @@
 	url = https://github.com/ultralytics/yolov5
 [submodule "AIC21-MTMC"]
 	path = AIC21-MTMC
-	url = https://github.com/regob/AIC21-MTMC.git
+	url = ../AIC21-MTMC.git
 [submodule "VehicleX"]
 	path = VehicleX
 	url = ../VehicleX

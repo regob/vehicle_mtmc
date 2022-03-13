@@ -40,6 +40,12 @@ class ImageDataset(Dataset):
     def __len__(self):
         return len(self.df)
 
+    def get_image(self, idx):
+        row = self.df.loc[idx]
+        pth = os.path.join(self.img_root, row["path"])
+        image = Image.open(pth).convert("RGB")
+        return image
+
     def __getitem__(self, idx):
         row = self.df.loc[idx]
         pth = os.path.join(self.img_root, row["path"])

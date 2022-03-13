@@ -4,3 +4,6 @@
 [submodule "VehicleX"]
 	path = VehicleX
 	url = ../VehicleX
+[submodule "reid/Vehicle_reID"]
+	path = reid/Vehicle_reID
+	url = ../Vehicle_reID

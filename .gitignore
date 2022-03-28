@@ -5,4 +5,5 @@
 *.pt
 *.zip
 datasets/*/
+datasets/id_split*
 __py*

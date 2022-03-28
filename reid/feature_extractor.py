@@ -3,45 +3,52 @@ import errno
 import argparse
 import numpy as np
 from PIL import Image
+from torchvision import transforms as T
 import torch
 
-# import cv2
+
+def fliplr(img):
+    '''flip horizontally'''
+    inv_idx = torch.arange(img.size(3) - 1, -1, -1).long()  # N x C x H x W
+    img_flip = img.index_select(3, inv_idx)
+    return img_flip
 
 
-class ImageEncoder:
-    def __init__(self, model, transform=None, feature_dim="infer", hflip_pass=True):
+class FeatureExtractor:
+    def __init__(self, model, feature_dim="infer"):
         self.model = model
-        self.transform = transform
+        model.eval()
+        self.device = next(iter(model.parameters())).device
         self.feature_dim = feature_dim
-        self.hflip_pass = hflip_pass
 
-    def __call__(self, data_x, batch_size=32):
-        out = np.zeros((len(data_x), self.feature_dim), np.float32)
-        _run_in_batches(
-            lambda x: self.session.run(self.output_var, feed_dict=x),
-            {self.input_var: data_x}, out, batch_size)
+    def __call__(self, X, batch_size=32):
+        if self.feature_dim == "infer":
+            dummy = X[0].unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                output = self.model(dummy)
+            self.feature_dim = output.shape[1]
+
+        out = np.zeros((len(X), self.feature_dim), np.float32)
+
+        for i in range(0, len(X), batch_size):
+            imax = min(len(X), i + batch_size)
+            X_in = X[i:imax]
+            X_in_flip = fliplr(X_in)
+            with torch.no_grad():
+                Y = self.model(X_in.to(self.device))
+                Y_flip = self.model(X_in_flip.to(self.device))
+            Y += Y_flip
+            Y_norm = torch.norm(Y, p=2, dim=1, keepdim=True)
+            Y = Y.div(Y_norm.expand_as(Y)).to("cpu")
+            out[i:imax, :] = Y
         return out
 
 
-def _run_in_batches(f, data_dict, out, batch_size):
-    data_len = len(out)
-    num_batches = int(data_len / batch_size)
-
-    s, e = 0, 0
-    for i in range(num_batches):
-        s, e = i * batch_size, (i + 1) * batch_size
-        batch_data_dict = {k: v[s:e] for k, v in data_dict.items()}
-        out[s:e] = f(batch_data_dict)
-    if e < len(out):
-        batch_data_dict = {k: v[e:] for k, v in data_dict.items()}
-        out[e:] = f(batch_data_dict)
-
-
-def extract_image_patch(image, bbox, patch_shape):
+def extract_image_patch(image, bbox, patch_shape=None):
     """Extract image patch from bounding box.
     Parameters
     ----------
-    image : ndarray
+    image : torch tensor
         The full image.
     bbox : array_like
         The bounding box in format (x, y, width, height).
@@ -58,6 +65,7 @@ def extract_image_patch(image, bbox, patch_shape):
         Returns None if the bounding box is empty or fully outside of the image
         boundaries.
     """
+
     bbox = np.array(bbox)
     if patch_shape is not None:
         # correct aspect ratio to patch shape
@@ -72,37 +80,40 @@ def extract_image_patch(image, bbox, patch_shape):
 
     # clip at image boundaries
     bbox[:2] = np.maximum(0, bbox[:2])
-    bbox[2:] = np.minimum(np.asarray(image.shape[:2][::-1]) - 1, bbox[2:])
+    bbox[2:] = np.minimum(np.asarray(image.shape[1:][::-1]) - 1, bbox[2:])
+
     if np.any(bbox[:2] >= bbox[2:]):
         return None
     sx, sy, ex, ey = bbox
-    image = image[sy:ey, sx:ex]
-    image = cv2.resize(image, tuple(patch_shape[::-1]))
+    image = image[:, sy:ey, sx:ex]
     return image
 
 
-def create_box_encoder(model_filename, input_name="images",
-                       output_name="features", batch_size=32):
-    image_encoder = ImageEncoder(model_filename, input_name, output_name)
-    image_shape = image_encoder.image_shape
+def create_extractor(model, batch_size=32, image_shape=(224, 224)):
+    image_encoder = FeatureExtractor(model)
+    img_transform = T.Compose([T.ToTensor(), T.Normalize(
+        [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+    patch_transform = T.Resize(image_shape, interpolation=3)
 
     def encoder(image, boxes):
+        image = img_transform(image)
         image_patches = []
         for box in boxes:
             patch = extract_image_patch(image, box, image_shape[:2])
             if patch is None:
                 print("WARNING: Failed to extract image patch: %s." % str(box))
-                patch = np.random.uniform(
-                    0., 255., image_shape).astype(np.uint8)
+                patch = torch.rand((3, image_shape[0], image_shape[1]))
+            patch = patch_transform(patch)
             image_patches.append(patch)
-        image_patches = np.asarray(image_patches)
+
+        image_patches = torch.stack(image_patches)
         return image_encoder(image_patches, batch_size)
 
     return encoder
 
 
 def generate_detections(encoder, mot_dir, output_dir, detection_dir=None):
-    """Generate detections with features.
+    """GENERATE detections with features.
     Parameters
     ----------
     encoder : Callable[image, ndarray] -> ndarray

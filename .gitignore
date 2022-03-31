@@ -6,4 +6,6 @@
 *.zip
 datasets/*/
 datasets/id_split*
+output/*
+.idea
 __py*

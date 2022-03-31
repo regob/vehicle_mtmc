@@ -9,7 +9,8 @@ import torch
 
 def fliplr(img):
     '''flip horizontally'''
-    inv_idx = torch.arange(img.size(3) - 1, -1, -1).long()  # N x C x H x W
+    # N x C x H x W
+    inv_idx = torch.arange(img.size(3) - 1, -1, -1).long()
     img_flip = img.index_select(3, inv_idx)
     return img_flip
 
@@ -19,9 +20,11 @@ class FeatureExtractor:
         self.model = model
         model.eval()
         self.device = next(iter(model.parameters())).device
+        self.dtype = next(iter(model.parameters())).dtype
         self.feature_dim = feature_dim
 
     def __call__(self, X, batch_size=32):
+        X = X.type(self.dtype)
         if self.feature_dim == "infer":
             dummy = X[0].unsqueeze(0).to(self.device)
             with torch.no_grad():

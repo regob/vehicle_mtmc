@@ -40,6 +40,13 @@ def save_tracklets(tracklets, path, max_features=None):
         pickle.dump(tracklets, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def load_tracklets(pickled_path):
+    """Loads a pickled list of tracklets."""
+    with open(pickled_path, "rb") as f:
+        tracklets = pickle.load(f)
+    return tracklets
+
+
 def save_tracklets_csv(tracklets, path):
     res = {
         "frame": [],
@@ -73,4 +80,3 @@ def save_tracklets_csv(tracklets, path):
 
     df = pd.DataFrame(res)
     df.to_csv(path, index=False)
-

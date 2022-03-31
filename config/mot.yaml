@@ -1,0 +1,11 @@
+MOT:
+ VIDEO: "datasets/highway.mp4"
+ REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet_ibn/opts.yaml"
+ REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet_ibn/net_11.pth"
+ REID_FP16: true
+ DETECTOR: "yolov5l"
+ SHOW: false
+ CSV_RESULT_PATH: "output/results.csv"
+ RESULT_PATH: "output/results.pkl"
+ REID_BATCHSIZE: 1
+ 

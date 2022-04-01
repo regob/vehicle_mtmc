@@ -15,7 +15,9 @@ except ImportError as e:
 from mot.deep_sort import preprocessing, nn_matching
 from mot.deep_sort.detection import Detection
 from mot.deep_sort.tracker import Tracker
-from mot.tracklet import Tracklet, save_tracklets, save_tracklets_csv
+from mot.tracklet import Tracklet
+from mot.tracklet_processing import save_tracklets, save_tracklets_csv
+from mot.static_features import StaticFeatureExtractor
 
 from reid.feature_extractor import create_extractor
 from reid.vehicle_reid.load_model import load_model_from_opts
@@ -63,6 +65,24 @@ def put_text(img_pil, text, x, y, color, font):
     return img_pil
 
 
+def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None):
+    good_boxes = []
+    for bbox, score, cl in zip(boxes, scores, classes):
+        if score < min_confid or cl not in good_classes:
+            continue
+        good_boxes.append(bbox)
+
+    if mask is None:
+        return good_boxes
+
+    final_boxes = []
+    for bbox in good_boxes:
+        cx, cy = int(bbox[0]), int(bbox[1])
+        if mask[cy, cx, 0] > 0:
+            final_boxes.append(bbox)
+    return final_boxes
+
+
 def run_tracker(cfg):
     max_cosine_distance = 0.4
     nn_budget = None
@@ -87,14 +107,33 @@ def run_tracker(cfg):
         "cosine", max_cosine_distance, nn_budget)
     tracker = Tracker(metric, n_init=3)
 
+    # load detector
     detector = load_yolo(cfg.MOT.DETECTOR)
     detector.to(device)
 
+    # load static feature extractors
+    if len(cfg.STATIC_FEATURES) > 0:
+        static_extractor = StaticFeatureExtractor(cfg.STATIC_FEATURES)
+    else:
+        static_extractor = None
+
+    # load input video
     video_in = imageio.get_reader(
         os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.VIDEO))
     video_meta = video_in.get_meta_data()
     video_w, video_h = video_meta["size"]
     video_frames = video_in.count_frames()
+
+    # load input mask if any
+    if cfg.MOT.DETECTION_MASK is not None:
+        det_mask = Image.open(os.path.join(
+            cfg.SYSTEM.ROOT_DIR, cfg.MOT.DETECTION_MASK))
+
+        # convert mask to 1's and 0's (with some treshold, because dividing by 255
+        # causes some black pixels if the mask is not exactly pixel perfect)
+        det_mask = (np.array(det_mask) / 180).astype(np.uint8)
+    else:
+        det_mask = None
 
     if cfg.MOT.VIDEO_OUTPUT:
         video_out = imageio.get_writer(os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.VIDEO_OUTPUT),
@@ -118,18 +157,20 @@ def run_tracker(cfg):
 
         # only bike, car, motorbike, bus, truck classes
         good_classes = [1, 2, 3, 5, 7]
-        res = list(filter(lambda t: int(t[5]) in good_classes, res))
 
         # detected boxes in cx,cy,w,h format
         boxes = [t[:4] for t in res]
         scores = [t[4] for t in res]
         classes = [t[5] for t in res]
 
+        boxes = filter_boxes(boxes, scores, classes,
+                             good_classes, 0.4, det_mask)
+
         boxes_tlwh = [[int(x - w / 2), int(y - h / 2), w, h]
                       for x, y, w, h in boxes]
 
         # TODO: non-max suppression?
-        features = extractor(frame, boxes)
+        features = extractor(frame, boxes_tlwh)
         detections = [Detection(bbox, score, clname, feature)
                       for bbox, score, clname, feature in zip(boxes_tlwh, scores, classes, features)]
 

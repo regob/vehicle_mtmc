@@ -37,6 +37,10 @@ C.MOT.REID_BATCHSIZE = 8
 # object detector (yolov5s, yolov5m, yolov5l, other yolov5 versions)
 C.MOT.DETECTOR = "yolov5l"
 
+# path to the detection mask image showing the ROI (region of interest)
+# in the image white pixels are included, while others (black ones) are excluded
+C.MOT.DETECTION_MASK = None
+
 # show video output stream for tracking (cv2 library NEEDED)
 C.MOT.SHOW = True
 
@@ -53,7 +57,13 @@ C.MOT.CSV_RESULT_PATH = None
 C.MOT.FONT = "assets/NimbusRomNo9L-Regu.ttf"
 
 # minimum number of bounding boxes per track
-C.MOT.MIN_FRAMES = 3
+C.MOT.MIN_FRAMES = 5
+
+# dict of feature_name:model_path pairs of static feature extracting models
+C.MOT.STATIC_FEATURES = {}
+
+# batch_size for static feature inference
+C.MOT.STATIC_FEATURE_BATCHSIZE = 8
 
 ########################################
 # REID model training / testing config

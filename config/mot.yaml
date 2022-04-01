@@ -1,11 +1,15 @@
 MOT:
- VIDEO: "datasets/highway.mp4"
+ VIDEO: "datasets/Zalaegerszeg/balaton.mp4"
  REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet_ibn/opts.yaml"
  REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet_ibn/net_11.pth"
  REID_FP16: true
- DETECTOR: "yolov5l"
- SHOW: false
- CSV_RESULT_PATH: "output/results.csv"
- RESULT_PATH: "output/results.pkl"
+ DETECTOR: "yolov5x6"
+ DETECTION_MASK: "assets/balaton_mask.jpg"
+ SHOW: true
+# CSV_RESULT_PATH: "output/results.csv"
+# RESULT_PATH: "output/results.pkl"
  REID_BATCHSIZE: 1
- 
+ STATIC_FEATURES:
+   color: "models/resnet18-color_veriwild.pt"
+   type: "models/resnet18-type_veriwild.pt"
+ STATIC_FEATURE_BATCHSIZE: 1

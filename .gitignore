@@ -7,5 +7,6 @@
 datasets/*/
 datasets/id_split*
 output/*
+models/*
 .idea
 __py*

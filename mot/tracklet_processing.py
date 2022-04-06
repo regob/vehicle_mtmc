@@ -39,7 +39,7 @@ def save_tracklets_csv(tracklets, path):
             res["bbox_width"].append(w)
             res["bbox_height"].append(h)
         res["track_id"].extend([tracklet.track_id] * len(tracklet.frames))
-        for static_f, values in tracklet.static_features:
+        for static_f, values in tracklet.static_features.items():
             res[static_f].extend(values)
 
     # all columns should have the same length

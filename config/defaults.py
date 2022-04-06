@@ -59,8 +59,9 @@ C.MOT.FONT = "assets/NimbusRomNo9L-Regu.ttf"
 # minimum number of bounding boxes per track
 C.MOT.MIN_FRAMES = 5
 
-# dict of feature_name:model_path pairs of static feature extracting models
-C.MOT.STATIC_FEATURES = {}
+# list of feature_name:model_path dicts of static feature extracting models
+# e.g C.MOT.STATIC_FEATURES = [{"color": "color_extracting_model.pt"}]
+C.MOT.STATIC_FEATURES = []
 
 # batch_size for static feature inference
 C.MOT.STATIC_FEATURE_BATCHSIZE = 8

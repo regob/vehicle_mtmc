@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageFont
 import imageio
 import argparse
 import matplotlib.pyplot as plt
@@ -17,8 +17,10 @@ from mot.deep_sort import preprocessing, nn_matching
 from mot.deep_sort.detection import Detection
 from mot.deep_sort.tracker import Tracker
 from mot.tracklet import Tracklet
-from mot.tracklet_processing import save_tracklets, save_tracklets_csv
+from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets
 from mot.static_features import StaticFeatureExtractor, FEATURES
+from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_tracklets
+from mot.zones import ZoneMatcher
 
 from reid.feature_extractor import FeatureExtractor
 from reid.vehicle_reid.load_model import load_model_from_opts
@@ -35,46 +37,6 @@ def parse_args():
         description="Run Multi-object tracker on a video.")
     parser.add_argument("--config", help="config yaml file")
     return parser.parse_args()
-
-
-def draw_rectangle(img_np, tx, ty, w, h, color, width):
-    """ Draw a colored rectangle to a numpy image. The top left corner is at (x,y), the rect has
-    a width of w and a height of h. 'width' is the border width of the rectangle. """
-
-    color = np.array(color)
-
-    # bottom right coordinates
-    bx, by = int(tx + w), int(ty + h)
-
-    ranges = np.array([[int(ty - width), ty, int(tx - width), int(bx + width + 1)],
-                       [by + 1, int(by + width + 1),
-                        int(tx - width), int(bx + width + 1)],
-                       [int(ty - width), int(by + width + 1),
-                        int(tx - width), tx],
-                       [int(ty - width), int(by + width + 1), bx + 1, int(bx + width + 1)]])
-
-    ranges[np.where(ranges < 0)] = 0
-
-    for r in ranges:
-        img_np[r[0]:r[1], r[2]:r[3]] = color
-    return img_np
-
-
-def put_text(img_pil, text, x, y, color, font):
-    draw = ImageDraw.Draw(img_pil)
-    draw.text((x, y), text, (color[0], color[1], color[2],
-                             255), font=font)
-    return img_pil
-
-
-def annotate(img_pil, id_label, static_features, x, y, color, font):
-    draw = ImageDraw.Draw(img_pil)
-    text = [id_label] + [f"{k}: {FEATURES[k][v]}" for k,
-                         v in static_features.items()]
-    text = "\n".join(text)
-    draw.multiline_text(
-        (x, y), text, (color[0], color[1], color[2], 255), font=font)
-    return img_pil
 
 
 def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None):
@@ -172,23 +134,21 @@ else:
     det_mask = None
 
 # initialize output video
-if cfg.MOT.VIDEO_OUTPUT:
-    video_out = imageio.get_writer(os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.VIDEO_OUTPUT),
-                                   format='FFMPEG', mode='I',
-                                   fps=video_meta["fps"],
-                                   codec=video_meta["codec"])
-
-# initialize font
-font = ImageFont.truetype(cfg.MOT.FONT, 13)
+if cfg.MOT.ONLINE_VIDEO_OUTPUT:
+    video_out = FileVideo(cfg.MOT.FONT,
+                          os.path.join(cfg.SYSTEM.ROOT_DIR,
+                                       cfg.MOT.VIDEO_OUTPUT),
+                          format='FFMPEG', mode='I', fps=video_meta["fps"],
+                          codec=video_meta["codec"])
 
 # initialize display
 if cfg.MOT.SHOW:
-    cv2.namedWindow("tracking", cv2.WINDOW_NORMAL)
-    cv2.resizeWindow("tracking", 1280, 720)
+    display = DisplayVideo(cfg.MOT.FONT)
 
-# initialize color map
-cmap = plt.get_cmap('hsv')
-colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
+# initialize zone matching
+if cfg.MOT.ZONE_MASK_DIR and cfg.MOT.VALID_ZONEPATHS:
+    zone_matcher = ZoneMatcher(os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.ZONE_MASK_DIR),
+                               cfg.MOT.VALID_ZONEPATHS)
 
 
 ########################################
@@ -231,9 +191,6 @@ for frame_num, frame in enumerate(video_in):
     tracker.predict()
     tracker.update(detections)
 
-    overlay = Image.fromarray(
-        np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8))
-
     active_tracks = []
     active_track_bboxes = []
     for track in tracker.tracks:
@@ -254,51 +211,59 @@ for frame_num, frame in enumerate(video_in):
     else:
         static_features = [None] * len(active_tracks)
 
+    active_track_ids = list(map(lambda tr: tr.track_id, active_tracks))
+
+    if cfg.MOT.ONLINE_VIDEO_OUTPUT:
+        video_out.update(frame, active_track_ids,
+                         active_track_bboxes, static_features)
+
+    if cfg.MOT.SHOW:
+        display.update(frame, active_track_ids,
+                       active_track_bboxes, static_features)
+
     for track, bbox, static_f in zip(active_tracks, active_track_bboxes, static_features):
         tracklet = tracklets[track.track_id]
         tx, ty, w, h = bbox
         bx, by = int(tx + w), int(ty + h)
+        if cfg.MOT.ZONE_MASK_DIR:
+            zone = zone_matcher.find_zone_for_point(
+                int(tx + w / 2), int(ty + h / 2))
+        else:
+            zone = None
         tracklet.update(frame_num, (tx, ty, w, h),
-                        track.last_feature, static_f)
-
-        color = colors[int(track.track_id) % len(colors)]
-        color = [int(i * 255) for i in color]
-
-        frame = draw_rectangle(frame, tx, ty, w, h, color, 1)
-        overlay = annotate(overlay, str(track.track_id), static_f,
-                           tx, by, color, font)
-
-    mask = Image.fromarray((np.array(overlay) > 0).astype(np.uint8) * 255)
-    frame_img = Image.fromarray(frame)
-    frame_img.paste(overlay, mask=mask)
-
-    # put frame number on the image
-    put_text(frame_img, f"Frame {frame_num}", 0, 0, (255, 0, 0), font)
-
-    frame = np.array(frame_img)
-
-    if cfg.MOT.VIDEO_OUTPUT:
-        video_out.append_data(frame)
-
-    if cfg.MOT.SHOW:
-        cv2.imshow("tracking", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-        cv2.waitKey(1)
+                        track.last_feature, static_f, zone)
 
     fps_counter.step()
     print("\rFrame: {}/{}, fps: {:.3f}".format(
         frame_num, video_frames, fps_counter.value()), end="")
 
-if cfg.MOT.VIDEO_OUTPUT:
+########################################
+# Run postprocessing and save results
+########################################
+
+if cfg.MOT.SHOW:
+    display.close()
+
+if cfg.MOT.ONLINE_VIDEO_OUTPUT:
     video_out.close()
 
-########################################
-# Save results
-########################################
 
 # filter unconfirmed tracklets
 final_tracks = list(tracklets.values())
 final_tracks = list(filter(lambda track: len(
     track.frames) >= cfg.MOT.MIN_FRAMES, final_tracks))
+
+print("Tracking done. Tracklets: {}".format(len(final_tracks)))
+if cfg.MOT.REFINE:
+    final_tracks = refine_tracklets(final_tracks, zone_matcher)[0]
+    print("Refinement done. Tracklets: {}".format(len(final_tracks)))
+
+if cfg.MOT.VIDEO_OUTPUT:
+    annotate_video_with_tracklets(os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.VIDEO),
+                                  os.path.join(cfg.SYSTEM.ROOT_DIR,
+                                               cfg.MOT.VIDEO_OUTPUT),
+                                  final_tracks,
+                                  cfg.MOT.FONT)
 
 if cfg.MOT.CSV_RESULT_PATH:
     save_path = os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.CSV_RESULT_PATH)

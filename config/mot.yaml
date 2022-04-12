@@ -5,7 +5,7 @@ MOT:
  REID_FP16: true
  DETECTOR: "yolov5x6"
  DETECTION_MASK: "assets/highway_mask.jpg"
- SHOW: false
+ SHOW: true
  VIDEO_OUTPUT: "output/highway_tracked.mp4"
  CSV_RESULT_PATH: "output/highway_results.csv"
  RESULT_PATH: "output/highway_results.pkl"
@@ -14,4 +14,9 @@ MOT:
    - color: "models/resnet18-color_veriwild.pt"
    - type: "models/resnet18-type_veriwild.pt"
  STATIC_FEATURE_BATCHSIZE: 1
-
+ ZONE_MASK_DIR: "assets/zones/highway/"
+ VALID_ZONEPATHS:
+   - "^(1,)+(0(,0)*,)?2(,2)*$"
+   - "^(4,)+(0(,0)*,)?3(,3)*$"
+ REFINE: false
+   

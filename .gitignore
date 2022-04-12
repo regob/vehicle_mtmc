@@ -5,6 +5,7 @@
 datasets/*/
 datasets/id_split*
 output/*
+output_save/*
 models/*
 mot/deep_sort_orig/
 .idea

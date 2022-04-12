@@ -1,12 +1,11 @@
 *.mkv
 *.mp4
-*.jpg
-*.png
 *.pt
 *.zip
 datasets/*/
 datasets/id_split*
 output/*
 models/*
+mot/deep_sort_orig/
 .idea
 __py*

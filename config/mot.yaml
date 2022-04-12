@@ -14,4 +14,4 @@ MOT:
    - color: "models/resnet18-color_veriwild.pt"
    - type: "models/resnet18-type_veriwild.pt"
  STATIC_FEATURE_BATCHSIZE: 1
- FONT: "/usr/share/fonts/truetype/Hack-Regular.ttf"
+

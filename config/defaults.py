@@ -54,7 +54,7 @@ C.MOT.RESULT_PATH = None
 C.MOT.CSV_RESULT_PATH = None
 
 # font for text subscriptions (id labels, etc.)
-C.MOT.FONT = "assets/NimbusRomNo9L-Regu.ttf"
+C.MOT.FONT = "assets/Hack-Regular.ttf"
 
 # minimum number of bounding boxes per track
 C.MOT.MIN_FRAMES = 5
@@ -65,6 +65,7 @@ C.MOT.STATIC_FEATURES = []
 
 # batch_size for static feature inference
 C.MOT.STATIC_FEATURE_BATCHSIZE = 8
+
 
 ########################################
 # REID model training / testing config

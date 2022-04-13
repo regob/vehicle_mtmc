@@ -19,13 +19,13 @@ C.SYSTEM.NUM_GPUS = 1
 ########################################
 C.MOT = CN()
 
-# video input for tracking, to be overridden
+# video input for tracking (to be overridden)
 C.MOT.VIDEO = None
 
-# reid model opts file for loading
+# reid model opts file for loading (to be overridden)
 C.MOT.REID_MODEL_OPTS = None
 
-# reid model checkpoint file
+# reid model checkpoint file (to be overridden)
 C.MOT.REID_MODEL_CKPT = None
 
 # use half precision (fp16) instead of fp32 in reid model

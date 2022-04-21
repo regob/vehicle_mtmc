@@ -1,5 +1,6 @@
 from scipy.cluster import vq
 import numpy as np
+from mot.static_features import FEATURES
 
 
 class Tracklet:
@@ -35,3 +36,16 @@ class Tracklet:
         f = np.array(self.features)
         centroids = vq.kmeans(f, k)[0]
         self.features = [feature for feature in centroids]
+
+    def predict_final_static_features(self):
+        static_f = {}
+        for k, v in self.static_features.items():
+            if type(v) == int:
+                return
+            preds = np.zeros((len(FEATURES[k]), ))
+            for pred, bbox in zip(v, self.bboxes):
+                x, y, w, h = bbox
+                preds[pred] += w * h
+
+            static_f[k] = int(preds.argmax())
+        self.static_features = static_f

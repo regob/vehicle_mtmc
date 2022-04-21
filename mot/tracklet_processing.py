@@ -35,7 +35,7 @@ def save_tracklets_csv(tracklets, path):
     for k in tracklets[0].static_features:
         res[k] = []
     if tracklets[0].zones:
-        res["zones"] = []
+        res["zone"] = []
 
     for tracklet in tracklets:
         res["frame"].extend(tracklet.frames)
@@ -45,7 +45,9 @@ def save_tracklets_csv(tracklets, path):
             res["bbox_width"].append(w)
             res["bbox_height"].append(h)
         res["track_id"].extend([tracklet.track_id] * len(tracklet.frames))
-        for static_f, values in tracklet.static_features.items():
+        for static_f, val in tracklet.static_features.items():
+            values = val if isinstance(val, list) else [
+                val] * len(tracklet.frames)
             res[static_f].extend(values)
         if tracklet.zones:
             res["zones"].extend(tracklet.zones)

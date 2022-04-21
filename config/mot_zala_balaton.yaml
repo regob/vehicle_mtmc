@@ -3,7 +3,7 @@ MOT:
  REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet_ibn/opts.yaml"
  REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet_ibn/net_11.pth"
  REID_FP16: true
- REID_BATCHSIZE: 1
+ REID_BATCHSIZE: 16
  DETECTOR: "yolov5x6"
  DETECTION_MASK: "assets/balaton_mask.jpg"
  SHOW: false

@@ -29,10 +29,14 @@ cfg.merge_from_file(os.path.join(cfg.SYSTEM.CFG_DIR, args.config))
 cfg.freeze()
 
 tracklets = load_tracklets(args.tracklet_pkl)
+
+for tracklet in tracklets:
+    tracklet.predict_final_static_features()
+
+
 if args.refine:
     zone_matcher = ZoneMatcher(os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.ZONE_MASK_DIR),
                                cfg.MOT.VALID_ZONEPATHS)
-    print(len(zone_matcher.masks))
     tracklets = refine_tracklets(tracklets, zone_matcher)[0]
 
 if args.video_in and args.video_out:

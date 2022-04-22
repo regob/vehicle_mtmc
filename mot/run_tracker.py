@@ -253,6 +253,9 @@ final_tracks = list(tracklets.values())
 final_tracks = list(filter(lambda track: len(
     track.frames) >= cfg.MOT.MIN_FRAMES, final_tracks))
 
+for track in final_tracks:
+    track.predict_final_static_features()
+
 print("Tracking done. Tracklets: {}".format(len(final_tracks)))
 if cfg.MOT.REFINE:
     final_tracks = refine_tracklets(final_tracks, zone_matcher)[0]

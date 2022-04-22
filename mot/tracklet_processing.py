@@ -50,7 +50,7 @@ def save_tracklets_csv(tracklets, path):
                 val] * len(tracklet.frames)
             res[static_f].extend(values)
         if tracklet.zones:
-            res["zones"].extend(tracklet.zones)
+            res["zone"].extend(tracklet.zones)
 
     # all columns should have the same length
     lengths = list(map(lambda col: len(col), res.values()))

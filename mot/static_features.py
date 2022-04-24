@@ -6,7 +6,7 @@ FEATURES = {
     "color": ["yellow", "orange", "green", "gray", "red", "blue", "white", "golden", "brown", "black",
               "purple", "pink"],
     "type": ["sedan", "suv", "van", "hatchback", "mpv",
-             "pickup", "bus", "truck", "estate", "sportscar", "RV"],
+             "pickup", "bus", "truck", "estate", "sportscar", "RV", "bike"],
 }
 
 

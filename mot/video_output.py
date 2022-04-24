@@ -135,11 +135,18 @@ def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack
         # gather info for the current frame
         for track_idx, ptr in active_tracks.items():
             track = tracklets[track_idx]
+            static_refined = isinstance(
+                next(iter(track.static_features.values())), int)
+
             if track.frames[ptr] == frame_idx:
                 track_ids.append(track.track_id)
                 bboxes.append(track.bboxes[ptr])
-                static_f.append({k: v[ptr]
-                                 for k, v in track.static_features.items()})
+
+                if static_refined:
+                    static_f.append(track.static_features)
+                else:
+                    static_f.append({k: v[ptr]
+                                     for k, v in track.static_features.items()})
 
                 if ptr >= len(track.frames) - 1:
                     ended_tracks.append(track_idx)

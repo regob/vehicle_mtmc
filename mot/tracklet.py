@@ -49,3 +49,12 @@ class Tracklet:
 
             static_f[k] = int(preds.argmax())
         self.static_features = static_f
+
+    def zone_enter_leave_frames(self, zone_id):
+        enter, leave = -1, -1
+        for fr, z in zip(self.frames, self.zones):
+            if z == zone_id:
+                if enter < 0:
+                    enter = fr
+                leave = fr
+        return enter, leave

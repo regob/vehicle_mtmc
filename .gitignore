@@ -4,6 +4,7 @@
 *.zip
 datasets/*/
 datasets/id_split*
+datasets/*.csv
 output/*
 output_save/*
 models/*

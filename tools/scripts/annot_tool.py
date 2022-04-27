@@ -31,6 +31,8 @@ parser.add_argument("--ref_time_ahead", type=float, default=0.0,
                     help="how many seconds the reference video is ahead of the video in time")
 parser.add_argument("--ref_matching_zone", type=int, default=-1,
                     help="zone to check enter and leave framestamps in between reference video and current video.")
+parser.add_argument("--unique_id_start", type=int, default=10000,
+                    help="starting value for assigning new globally unique track_id's")
 args = parser.parse_args()
 
 
@@ -195,10 +197,11 @@ class Annotator:
 
 
 class TrackAnnotatorDialog:
-    def __init__(self, parent, tracklet, num_images=40, reference_tracklets=None):
+    def __init__(self, parent, tracklet, num_images=40, reference_tracklets=None, unique_id=10000):
         self.top = tk.Toplevel(parent)
         self.tracklet = tracklet
         self.num_images = min(num_images, len(tracklet.frames))
+        self.unique_id = unique_id
 
         # initialize buttons
         self.btn_frame = ttk.Frame(self.top)
@@ -208,11 +211,15 @@ class TrackAnnotatorDialog:
         self.btn_abort = ttk.Button(
             self.btn_frame, text="abort", command=self.cancel)
         self.btn_abort.grid(row=0, column=1, padx=3)
+        self.btn_unique_id = ttk.Button(
+            self.btn_frame, text="unique id", command=self._assign_unique_id)
+        self.btn_unique_id.grid(row=0, column=2, padx=3)
         self.btn_frame.pack(fill=tk.X, expand=False, padx=2, pady=2)
 
         # add button keybinds
         self.top.bind("<q>", lambda e: self.cancel())
         self.top.bind("<w>", lambda e: self.accept())
+        self.top.bind("<u>", lambda e: self._assign_unique_id())
 
         # initialize inputs
         self.input_frame = ttk.Frame(self.top)
@@ -277,7 +284,7 @@ class TrackAnnotatorDialog:
         self.frame.pack(fill=tk.BOTH, expand=True)
 
         # initialize frame of reference tracklets
-        if reference_tracklets is not None:
+        if reference_tracklets:
             self.reference_frame = ttk.Frame(self.top)
             ref_width = min(
                 100, (1280 - 4 * len(reference_tracklets)) / len(reference_tracklets))
@@ -288,7 +295,7 @@ class TrackAnnotatorDialog:
                 img_label = ttk.Label(frame, image=photo_img)
                 img_label.photo = photo_img
                 img_label.bind("<Button-1>",
-                               lambda _, trid=track.save_track_id: self.set_id_input(str(trid)))
+                               lambda _, track=track: self._choose_ref_track(track))
                 img_label.grid(row=0, column=0)
                 ttk.Label(frame, text=str(
                     track.save_track_id)).grid(row=1, column=0)
@@ -299,6 +306,14 @@ class TrackAnnotatorDialog:
         self.shift = False
         self.last_click = 0
         self.accepted_idxes = None
+
+    def _assign_unique_id(self):
+        self.set_id_input(str(self.unique_id))
+
+    def _choose_ref_track(self, track):
+        self.set_id_input(str(track.save_track_id))
+        for f, val in track.static_features.items():
+            self.feature_inputs[f].set(FEATURES[f][val])
 
     def set_id_input(self, text):
         self.track_id_input.delete(0, "end")
@@ -352,7 +367,8 @@ class TrackAnnotatorDialog:
 
 class Main:
     def __init__(self, video_path, tracklets_path, start_frame=0, reference_tracks=None,
-                 ref_time_ahead=0.0, ref_matching_zone=-1, ref_max_time_gap=6.0, ref_video_fps=None):
+                 ref_time_ahead=0.0, ref_matching_zone=-1, ref_max_time_gap=6.0, ref_video_fps=None,
+                 unique_id_start=10000):
         self.video_path = video_path
         self.start_frame = start_frame
         self.tracklets_path = tracklets_path
@@ -361,6 +377,7 @@ class Main:
         self.ref_matching_zone = ref_matching_zone
         self.ref_max_time_gap = ref_max_time_gap
         self.ref_video_fps = ref_video_fps
+        self.next_unique_id = unique_id_start
         self.root = tk.Tk()
         try:
             self.root.tk.call("source", "~/.themes/azure/azure.tcl")
@@ -523,11 +540,14 @@ class Main:
         else:
             ref_tracks = None
 
-        track_annot = TrackAnnotatorDialog(self.root, tracklet, 40, ref_tracks)
+        track_annot = TrackAnnotatorDialog(
+            self.root, tracklet, 40, ref_tracks, unique_id=self.next_unique_id)
         self.root.wait_window(track_annot.top)
         if track_annot.accepted_idxes:
             self.annotator.add_annotations(
                 tracklet, track_annot.accepted_idxes)
+            if tracklet.save_track_id == self.next_unique_id:
+                self.next_unique_id += 1
             self.statusbar["text"] = f"Track {tracklet.save_track_id} added ({len(track_annot.accepted_idxes)} images)."
         else:
             self.statusbar["text"] = f"Track {tracklet.track_id} aborted."
@@ -563,6 +583,10 @@ class Main:
         if path:
             self.annotator.load_pickle(path)
             self.statusbar["text"] = "Annotations loaded"
+            max_id = max(
+                map(lambda tr: tr[0].save_track_id, self.annotator.tracklets.values()))
+            if max_id > self.next_unique_id:
+                self.next_unique_id = max_id + 1
         else:
             self.statusbar["text"] = "Invalid path chosen"
 
@@ -607,7 +631,9 @@ if args.reference_video and args.reference_annot:
 else:
     print("Reference tracks won't be loaded, not enough arguments given.")
     reference_tracks = None
+    ref_video_fps = None
 
 main = Main(args.video, args.tracklets, start_frame=args.start_frame,
             reference_tracks=reference_tracks, ref_time_ahead=args.ref_time_ahead,
-            ref_matching_zone=args.ref_matching_zone, ref_video_fps=ref_video_fps)
+            ref_matching_zone=args.ref_matching_zone, ref_video_fps=ref_video_fps,
+            unique_id_start=args.unique_id_start)

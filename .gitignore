@@ -2,6 +2,7 @@
 *.mp4
 *.pt
 *.zip
+*.tar.gz
 datasets/*/
 datasets/id_split*
 datasets/*.csv

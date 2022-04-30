@@ -7,3 +7,4 @@
 [submodule "reid/vehicle_reid"]
 	path = reid/vehicle_reid
 	url = ../vehicle_reid
+	branch = master

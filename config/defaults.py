@@ -14,6 +14,9 @@ C.SYSTEM.ROOT_DIR = str(Path(__file__).parent.parent)
 # number of GPUs to use (currently 0 or 1)
 C.SYSTEM.NUM_GPUS = 1
 
+# gpu ids to be used
+C.SYSTEM.GPU_IDS = [0]
+
 ########################################
 # MOT (single camera tracking) config
 ########################################
@@ -80,11 +83,6 @@ C.MOT.ZONE_MASK_DIR = None
 
 # run tracklet refinement at the end (post processing), zones are needed for this
 C.MOT.REFINE = True
-
-########################################
-# REID model training / testing config
-########################################
-C.REID = CN()
 
 
 def get_cfg_defaults():

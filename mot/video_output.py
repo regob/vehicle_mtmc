@@ -45,13 +45,24 @@ def put_text(img_pil, text, x, y, color, font):
     return img_pil
 
 
-def annotate(img_pil, id_label, static_features, x, y, color, font):
+def annotate(img_pil, id_label, static_features, tx, ty, bx, by, color, font):
+    """ Put the id label and the features as text below or above of a bounding box. """
+
     draw = ImageDraw.Draw(img_pil)
     text = [id_label] + [f"{k}: {FEATURES[k][v]}" for k,
                          v in static_features.items()]
     text = "\n".join(text)
+
+    textcoords = draw.multiline_textbbox((tx, by), text, font=font)
+
+    # if the annotation below the box stretches out of the image, put it above
+    if textcoords[3] >= img_pil.size[1]:
+        txt_y = ty - (textcoords[3] - textcoords[1]) - 4
+    else:
+        txt_y = by
+
     draw.multiline_text(
-        (x, y), text, (color[0], color[1], color[2], 255), font=font)
+        (tx, txt_y), text, (color[0], color[1], color[2], 255), font=font)
     return img_pil
 
 
@@ -72,8 +83,9 @@ class Video:
             color = self.colors[int(track_id) % len(self.colors)]
             color = [int(i * 255) for i in color]
             frame = draw_rectangle(frame, tx, ty, w, h, color, 1)
+
             overlay = annotate(overlay, str(track_id), static_f,
-                               tx, by, color, self.font)
+                               tx, ty, bx, by, color, self.font)
 
         mask = Image.fromarray((np.array(overlay) > 0).astype(np.uint8) * 255)
         frame_img = Image.fromarray(frame)

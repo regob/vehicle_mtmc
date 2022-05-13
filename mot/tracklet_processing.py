@@ -23,7 +23,7 @@ def load_tracklets(pickled_path):
     return tracklets
 
 
-def save_tracklets_csv(tracklets, path):
+def to_detections(tracklets):
     res = {
         "frame": [],
         "bbox_topleft_x": [],
@@ -60,6 +60,11 @@ def save_tracklets_csv(tracklets, path):
             print(f"Items in column {k}: {len(v)}")
         raise ValueError("Error: not all column lengths are equal.")
 
+    return res
+
+
+def save_tracklets_csv(tracklets, path):
+    res = to_detections(tracklets)
     df = pd.DataFrame(res)
     df.to_csv(path, index=False)
 

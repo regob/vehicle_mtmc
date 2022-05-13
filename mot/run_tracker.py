@@ -52,7 +52,7 @@ def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None
     final_boxes = []
     for bbox in good_boxes:
         cx, cy = int(bbox[0]), int(bbox[1])
-        if mask[cy, cx, 0] > 0:
+        if mask[cy, cx] > 0:
             final_boxes.append(bbox)
     return final_boxes
 
@@ -130,6 +130,10 @@ if cfg.MOT.DETECTION_MASK is not None:
     # convert mask to 1's and 0's (with some treshold, because dividing by 255
     # causes some black pixels if the mask is not exactly pixel perfect)
     det_mask = (np.array(det_mask) / 180).astype(np.uint8)
+
+    if len(det_mask.shape) == 3:
+        det_mask = det_mask[:, :, 0]
+
 else:
     det_mask = None
 
@@ -175,7 +179,6 @@ for frame_num, frame in enumerate(video_in):
     boxes_tlwh = [[int(x - w / 2), int(y - h / 2), w, h]
                   for x, y, w, h in boxes]
 
-    # TODO: non-max suppression?
     features = extractor(frame, boxes_tlwh)
     detections = [Detection(bbox, score, clname, feature)
                   for bbox, score, clname, feature in zip(boxes_tlwh, scores, classes, features)]
@@ -206,10 +209,10 @@ for frame_num, frame in enumerate(video_in):
         active_track_bboxes.append([tx, ty, w, h])
         active_tracks.append(track)
 
-    if static_extractor is not None:
-        static_features = static_extractor(frame, active_track_bboxes)
-    else:
+    if static_extractor is None:
         static_features = [None] * len(active_tracks)
+    else:
+        static_features = static_extractor(frame, active_track_bboxes)
 
     active_track_ids = list(map(lambda tr: tr.track_id, active_tracks))
 
@@ -230,7 +233,9 @@ for frame_num, frame in enumerate(video_in):
                 int(tx + w / 2), int(ty + h / 2))
         else:
             zone = None
-        tracklet.update(frame_num, (tx, ty, w, h),
+
+        # TODO: pass confidence levels instead of 1.0
+        tracklet.update(frame_num, (tx, ty, w, h), 1.0,
                         track.last_feature, static_f, zone)
 
     fps_counter.step()

@@ -17,12 +17,16 @@ class Tracklet:
         # zone_id's for each bbox
         self.zones = []
 
+        # confidence level for each bbox
+        self.conf = []
+
         self.static_features = {}
 
-    def update(self, frame_num, bbox, feature, static_features=None, zone_id=None):
+    def update(self, frame_num, bbox, conf, feature, static_features=None, zone_id=None):
         self.features.append(feature)
         self.frames.append(frame_num)
         self.bboxes.append(bbox)
+        self.conf.append(conf)
         if static_features:
             for k, v in static_features.items():
                 self.static_features.setdefault(k, []).append(v)

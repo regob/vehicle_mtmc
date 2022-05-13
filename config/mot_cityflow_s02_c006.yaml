@@ -1,0 +1,18 @@
+MOT:
+ VIDEO: "datasets/cityflow_track3/validation/S02/c006/vdo.avi"
+ REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet_ibn_veri_zala/opts.yaml"
+ REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet_ibn_veri_zala/net_last.pth"
+ REID_FP16: true
+ REID_BATCHSIZE: 1
+ DETECTOR: "yolov5x6"
+ DETECTION_MASK: "datasets/cityflow_track3/validation/S02/c006/roi.jpg"
+ SHOW: true
+ CSV_RESULT_PATH: "output/s002_c006_results.csv"
+ RESULT_PATH: "output/s002_c006_results.pkl"
+ STATIC_FEATURES:
+   - color: "models/resnet18-color_zala.pt"
+   - type: "models/resnet18-type_zala.pt"
+ STATIC_FEATURE_BATCHSIZE: 1
+ ZONE_MASK_DIR: null
+ REFINE: false
+   

@@ -11,8 +11,8 @@ MOT:
  RESULT_PATH: "output/highway_results.pkl"
  REID_BATCHSIZE: 1
  STATIC_FEATURES:
-   - color: "models/resnet18-color_veriwild.pt"
-   - type: "models/resnet18-type_veriwild.pt"
+   - color: "models/resnet18-color_zala.pt"
+   - type: "models/resnet18-type_zala.pt"
  STATIC_FEATURE_BATCHSIZE: 1
  ZONE_MASK_DIR: "assets/zones/highway/"
  VALID_ZONEPATHS:

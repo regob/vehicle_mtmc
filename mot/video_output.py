@@ -12,6 +12,7 @@ except ImportError as e:
 
 from mot.static_features import FEATURES
 from mot.tracklet import Tracklet
+from mot.tracklet_processing import load_tracklets
 
 
 def draw_rectangle(img_np, tx, ty, w, h, color, width):
@@ -55,10 +56,11 @@ def annotate(img_pil, id_label, static_features, x, y, color, font):
 
 
 class Video:
-    def __init__(self, font):
+    def __init__(self, font, fontsize=13):
         cmap = plt.get_cmap('hsv')
         self.colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
-        self.font = ImageFont.truetype(font, 13)
+        self.font = ImageFont.truetype(font, fontsize)
+        self.frame_font = ImageFont.truetype(font, 18)
         self.frame_num = 0
 
     def render_tracks(self, frame, track_ids, track_bboxes, static_features):
@@ -78,15 +80,15 @@ class Video:
         frame_img.paste(overlay, mask=mask)
 
         put_text(frame_img, f"Frame {self.frame_num}",
-                 0, 0, (255, 0, 0), self.font)
+                 0, 0, (255, 0, 0), self.frame_font)
         self.frame_num += 1
 
         return np.array(frame_img)
 
 
 class DisplayVideo(Video):
-    def __init__(self, font, width=1280, height=720):
-        super().__init__(font)
+    def __init__(self, font, width=1280, height=720, fontsize=13):
+        super().__init__(font, fontsize=fontsize)
         cv2.namedWindow("tracking", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("tracking", width, height)
 
@@ -100,8 +102,8 @@ class DisplayVideo(Video):
 
 
 class FileVideo(Video):
-    def __init__(self, font, save_path, fps, codec, format="FFMPEG", mode="I"):
-        super().__init__(font)
+    def __init__(self, font, save_path, fps, codec, format="FFMPEG", mode="I", fontsize=13):
+        super().__init__(font, fontsize=fontsize)
         self.video = imageio.get_writer(save_path, format=format, mode=mode,
                                         fps=fps, codec=codec)
 
@@ -113,11 +115,12 @@ class FileVideo(Video):
         self.video.close()
 
 
-def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack-Regular.ttf"):
+def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack-Regular.ttf",
+                                  fontsize=13):
     video_in = imageio.get_reader(input_path)
     video_meta = video_in.get_meta_data()
     video_out = FileVideo(
-        font, output_path, video_meta["fps"], video_meta["codec"])
+        font, output_path, video_meta["fps"], video_meta["codec"], fontsize=fontsize)
 
     tracklets = sorted(tracklets, key=lambda tr: tr.frames[0])
     active_tracks = {}
@@ -135,8 +138,12 @@ def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack
         # gather info for the current frame
         for track_idx, ptr in active_tracks.items():
             track = tracklets[track_idx]
-            static_refined = isinstance(
-                next(iter(track.static_features.values())), int)
+
+            try:
+                static_refined = isinstance(
+                    next(iter(track.static_features.values())), int)
+            except StopIteration:
+                static_refined = True
 
             if track.frames[ptr] == frame_idx:
                 track_ids.append(track.track_id)
@@ -161,3 +168,19 @@ def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack
         video_out.update(frame, track_ids, bboxes, static_f)
 
     video_out.close()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="annotate video with tracklets")
+    parser.add_argument("input_video", help="video to annotate")
+    parser.add_argument("output_video", help="video output path")
+    parser.add_argument(
+        "tracklets", help="pickle file containing the tracklets")
+    parser.add_argument("--fontsize", default=13, type=int,
+                        help="font size for the annotation")
+    args = parser.parse_args()
+
+    tracklets = load_tracklets(args.tracklets)
+    annotate_video_with_tracklets(args.input_video, args.output_video, tracklets,
+                                  fontsize=args.fontsize)

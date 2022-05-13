@@ -21,8 +21,10 @@ parser.add_argument("--annot_csv", default=None,
                     help="annotations for the objects to extract from the frames")
 parser.add_argument("--annot_output_csv", default=None,
                     help="output path for the new annotations (with filepaths) as csv")
-parser.add_argument("--resize", default=224,
+parser.add_argument("--resize", default=224, type=int,
                     help="resize image to this size, if <= 0, original size is kept")
+parser.add_argument("--save_frames_too", action="store_true",
+                    help="save the whole frame(s). Only matters when annot_csv is provided (and frames are not saved by default)")
 ########################################
 # Parse args and configuration
 ########################################
@@ -68,9 +70,11 @@ for frame_num, frame in tqdm.tqdm(enumerate(video), total=video.count_frames()):
         if args.frame_num < frame_num:
             break
 
-    if df is None:
+    if df is None or args.save_frames_too:
         imageio.imsave(os.path.join(
             args.save_path, f"frame_{frame_num}.jpg"), frame)
+
+    if df is None:
         continue
 
     for idx in annots.get(frame_num, []):

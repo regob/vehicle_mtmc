@@ -1,6 +1,5 @@
 from yacs.config import CfgNode as CN
 from pathlib import Path
-import os
 
 C = CN()
 C.SYSTEM = CN()

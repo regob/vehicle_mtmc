@@ -1,7 +1,6 @@
 import imageio
 from PIL import Image
 import argparse
-import shutil
 import os
 import sys
 import tqdm

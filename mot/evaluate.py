@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import argparse
 from pprint import pprint
 import motmetrics as mm

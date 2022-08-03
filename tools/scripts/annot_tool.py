@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import math
 import argparse
 import pickle
-from collections import deque
 
 from mot.tracklet_processing import load_tracklets
 from mot.static_features import FEATURES

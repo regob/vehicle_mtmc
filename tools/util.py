@@ -20,9 +20,11 @@ class FrameRateCounter:
 class Timer:
     t = time.time()
 
+    @classmethod
     def start():
         Timer.t = time.time()
 
+    @classmethod
     def show(callname=""):
         print("Call ({}) took {:.5f} seconds.".format(
             callname, time.time() - Timer.t))

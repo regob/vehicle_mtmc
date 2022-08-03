@@ -3,7 +3,6 @@ import pandas as pd
 import pickle
 from bisect import bisect_left
 from mot.tracklet import Tracklet
-from mot.zones import ZoneMatcher
 from tools.metrics import iou
 
 
@@ -92,6 +91,7 @@ def split_tracklet(tracklet, frame_idx, new_track_id):
     track1.frames = tracklet.frames[:frame_idx]
     track1.bboxes = tracklet.bboxes[:frame_idx]
     track1.zones = tracklet.zones[:frame_idx]
+    track1.conf = tracklet.conf[:frame_idx]
     track1.static_features = {k: v[:frame_idx]
                               for k, v in tracklet.static_features.items()}
 
@@ -99,12 +99,14 @@ def split_tracklet(tracklet, frame_idx, new_track_id):
     track2.frames = tracklet.frames[frame_idx:]
     track2.bboxes = tracklet.bboxes[frame_idx:]
     track2.zones = tracklet.zones[frame_idx:]
+    track2.conf = tracklet.conf[frame_idx:]
     track2.static_features = {k: v[frame_idx:]
                               for k, v in tracklet.static_features.items()}
     return track1, track2
 
 
 def join_tracklets(track1, track2):
+    """ Merges two tracklets. The second is appended to the first one, and the first track's id is kept. """
     track1.frames.extend(track2.frames)
     track1.features.extend(track2.features)
     track1.bboxes.extend(track2.bboxes)

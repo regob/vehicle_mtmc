@@ -1,16 +1,9 @@
 import torch
 import numpy as np
 import os
-from PIL import Image, ImageFont
+from PIL import Image
 import imageio
 import argparse
-import matplotlib.pyplot as plt
-import time
-
-try:
-    import cv2
-except ImportError as e:
-    print("cv2 import failed, on-the-fly video output not available: {}".format(e))
 
 # repository imports (PYTHONPATH needs to be set)
 from mot.deep_sort import preprocessing, nn_matching
@@ -18,7 +11,7 @@ from mot.deep_sort.detection import Detection
 from mot.deep_sort.tracker import Tracker
 from mot.tracklet import Tracklet
 from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets
-from mot.static_features import StaticFeatureExtractor, FEATURES
+from mot.static_features import StaticFeatureExtractor
 from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_tracklets
 from mot.zones import ZoneMatcher
 
@@ -27,7 +20,7 @@ from reid.vehicle_reid.load_model import load_model_from_opts
 
 from detection.load_detector import load_yolo
 
-from tools.util import FrameRateCounter, Timer
+from tools.util import FrameRateCounter
 from tools.preprocessing import create_extractor
 from config.defaults import get_cfg_defaults
 

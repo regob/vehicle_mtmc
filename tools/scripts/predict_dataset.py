@@ -1,7 +1,6 @@
 import argparse
 import torch
-import tqdm
-from torchvision import datasets, transforms as T
+from torchvision import transforms as T
 from torch.utils.data import DataLoader
 from dataset import TestDataset
 import os

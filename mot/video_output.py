@@ -11,7 +11,6 @@ except ImportError as e:
 
 
 from mot.static_features import FEATURES
-from mot.tracklet import Tracklet
 from mot.tracklet_processing import load_tracklets
 
 

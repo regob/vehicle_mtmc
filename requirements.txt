@@ -1,0 +1,16 @@
+torch==1.7.1
+pytorch_metric_learning==1.2.0
+motmetrics>=1.2.5
+numpy>=1.18.5
+pandas==1.2.2
+torchvision==0.8.2
+matplotlib>=3.3.3
+pyyaml>=6.0
+timm==0.3.4
+imageio>=2.9.0
+yacs>=0.1.8
+opencv-python>=4.5.5.64
+requests>=2.25.1
+seaborn>=0.11.1
+imageio-ffmpeg>=0.4.5
+efficientnet_pytorch>=0.7.0

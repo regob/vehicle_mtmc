@@ -1,0 +1,10 @@
+OUTPUT_DIR: "output/zala_mtmc"
+MTMC:
+  CAMERA_LAYOUT: 'config/zala/mtmc_camera_layout.txt'
+  PICKLED_TRACKLETS:
+    - "output/balaton/zala_balaton_results.pkl"
+    - "output/gasparich/gasparich_results.pkl"
+    - "output/kormend/kormend_results.pkl"
+    - "output/bevasarlokozpont/bevasarlokozpont_results.pkl"
+  LINKAGE: 'average'
+  MIN_SIM: 0.5

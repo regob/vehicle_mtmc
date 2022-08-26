@@ -8,8 +8,11 @@ class Tracklet:
 
     def __init__(self, track_id):
         self.features = []
-        self.frames = []
+        self.mean_feature = None
         self.track_id = track_id
+
+        # frame indices of the bounding boxes
+        self.frames = []
 
         # bounding boxes in tlwh format
         self.bboxes = []
@@ -20,9 +23,21 @@ class Tracklet:
         # confidence level for each bbox
         self.conf = []
 
+        # static features of the track
         self.static_features = {}
 
+        # global attributes in multi-camera systems, not used in MOT
+        self.cam = None
+        self.global_start, self.global_end = None, None
+
+    def __str__(self):
+        return f"Tracklet(track_id={self.track_id}, num_frames: {len(self.frames)}, num_features:{len(self.features)})"
+
+    def __hash__(self):
+        return hash(self.track_id)
+
     def update(self, frame_num, bbox, conf, feature, static_features=None, zone_id=None):
+        """Add a new detection to the track."""
         self.features.append(feature)
         self.frames.append(frame_num)
         self.bboxes.append(bbox)
@@ -33,15 +48,47 @@ class Tracklet:
         if zone_id is not None:
             self.zones.append(zone_id)
 
+    def compute_mean_feature(self, method="area_avg"):
+        """Compute a single feature from the frame-by-frame features to describe the track.
+
+        Parameters
+        ----------
+        method: str
+            Method to use from ('area_avg', 'mean').
+            area_avg: sum the features multiplied by the area of the bounding box, then divide the result
+            by the sum of areas.
+            mean: take the unweighted mean of the features.
+
+        Returns
+        -------
+        mean_feature: np.array
+        """
+        self.mean_feature = np.zeros_like(self.features[0])
+        if method == "area_avg":
+            div = min(map(lambda x: x[2] * x[3], self.bboxes))
+        for i, f in enumerate(self.features):
+            if method == "area_avg":
+                area = self.bboxes[i][2] * self.bboxes[i][3]
+                self.mean_feature += f * (area / div)
+            else:
+                self.mean_feature += f
+
+        norm = np.linalg.norm(self.mean_feature)
+        self.mean_feature = self.mean_feature / norm
+        return self.mean_feature
+
     def cluster_features(self, k):
+        """Reduce the re-id features by K-means clustering."""
         if len(self.features) <= k:
             return
 
         f = np.array(self.features)
         centroids = vq.kmeans(f, k)[0]
         self.features = [feature for feature in centroids]
+        return self.features
 
     def predict_final_static_features(self):
+        """Update the static features to describe the whole track instead of frame-by-frame values."""
         static_f = {}
         for k, v in self.static_features.items():
             if type(v) == int:
@@ -53,8 +100,10 @@ class Tracklet:
 
             static_f[k] = int(preds.argmax())
         self.static_features = static_f
+        return static_f
 
     def zone_enter_leave_frames(self, zone_id):
+        """Frame indices when the track entered and left a given zone."""
         enter, leave = -1, -1
         for fr, z in zip(self.frames, self.zones):
             if z == zone_id:

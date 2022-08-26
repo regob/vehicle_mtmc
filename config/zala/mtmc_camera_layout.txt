@@ -1,0 +1,44 @@
+## matrices for describing the multi-camera layout
+
+# fps is the frame rate of each camera
+
+# offsets denote the time difference between cameras, if these values are
+# added to them respectively, they become synchronized
+
+# The (i,j)-th element of the compatibility matrix shows whether a track from
+# the j-th camera can be appended to one in the i-th camera.
+
+# The (i,j)-th element of dtmin and dtmax denotes the timeframe for matching.
+# If the track left camera i at t, it has to appear on j 
+# in the interval [t - dtmin, t + dtmax]
+# infinity is denoted by -inf or inf.
+
+### camera mapping
+# cam 0: balaton
+# cam 1: gasparich
+# cam 2: kormend
+# cam 3: bevasarlokozpont
+
+fps
+24.92 25.0 25.33 25.23
+
+offset
+-13.0 -9.2 -10.5 -8.5
+
+compatibility
+0 1 1 1
+1 0 1 1
+1 1 0 1
+1 1 1 0
+
+dtmin
+0 -5 -5 -5
+-5 0 -5 -5
+-5 -5 0 -5
+-5 -5 -5 0
+
+dtmax
+0 5 5 5
+5 0 5 5
+5 5 0 5
+5 5 5 0

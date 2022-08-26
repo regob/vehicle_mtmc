@@ -11,7 +11,7 @@ FEATURES = {
 
 
 class StaticFeatureExtractor:
-    def __init__(self, model_paths_by_feature, fp16=True, device="cuda:0"):
+    def __init__(self, model_paths_by_feature, fp16=False, device="cuda:0"):
         self.models = {}
         for feature, path in model_paths_by_feature.items():
             model = torch.load(path)

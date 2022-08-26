@@ -1,10 +1,12 @@
-from typing import List
+from typing import List, Set
 import time
+import heapq
+import numpy as np
 
 
 from mot.tracklet import Tracklet
 from mtmc.cameras import CameraLayout
-from mtmc.multicam_tracklet import MulticamTracklet
+from mtmc.multicam_tracklet import MulticamTracklet, have_mutual_cams
 from tools.metrics import cosine_sim
 from tools.data_structures import DSU
 from tools import log
@@ -22,21 +24,65 @@ def _flatten_tracks_with_cam_info(tracks: List[List[Tracklet]], cams: CameraLayo
     return flat_tracks
 
 
-def greedy_mtmc_matching(tracks: List[List[Tracklet]], cams: CameraLayout, min_sim=0.5) -> List[MulticamTracklet]:
+def multicam_track_similarity(mtrack1: MulticamTracklet, mtrack2: MulticamTracklet, linkage: str) -> float:
+    """Compute the similarity score between two multicam tracks.
+
+    Parameters
+    ----------
+    mtrack1: first multi-camera tracklet.
+    mtrack2: second multi-camera tracklet.
+    linkage: method to use for computing from ('average', 'single', 'complete', 'mean_feature')
+
+    Returns
+    -------
+    sim_score: similarity between the tracks.
+    """
+    
+    if linkage == "mean_feature":
+        return cosine_sim(mtrack1.mean_feature, mtrack2.mean_feature, True)
+
+    # similarity of all pairs of tracks between mtrack1 and mtrack2
+    # this scales badly, but in all sensible cases multicam tracks contain only a few tracks
+    all_sims = [cosine_sim(t1.mean_feature, t2.mean_feature, True) for t1 in mtrack1.tracks for t2 in mtrack2.tracks]
+    if linkage == "average":
+        return np.mean(all_sims)
+    if linkage == "single":
+        return np.max(all_sims)
+    if linkage == "complete":
+        return np.min(all_sims)
+    raise ValueError("Invalid linkage parameter value.")
+
+        
+def greedy_mtmc_matching(tracks: List[List[Tracklet]], cams: CameraLayout, min_sim=0.5, linkage="average") -> List[MulticamTracklet]:
     """Run greedy matching on single-camera tracks.
 
-    Args:
-       tracks: single camera tracklets by camera.
-       cams: camera layout of the system
-       min_sim: minimum similarity score between tracklet mean features to merge (default 0.5)
-
-    Returns:
-       List[MulticamTracklet]: the final multi-camera tracklets.
+    Run a similar merging algorithm to agglomerative clustering with a distance limit to merge tracks.
+    The camera constraints are also respected, thus two sets of tracks (multicam tracks) can be matched if:
+        * they do not share any cameras
+        * we can choose a (track1, track2) pair, so that track1 and track2 are from different multicam tracks and
+          track1.global_end + dtmin <= track2.global_start <= track1.global_end + dtmax,
+          where dtmin and dtmax are the specific values for track1.cam and track2.cam,
+          also track1.cam and track2.cam are compatible in this order.
+        * their similarity is higher than min_sim, with respect to 'linkage' in calculation.
+    First each single camera track has a new multicam track, then we continue merging the pair,
+    with the highest similarity until it is lower than min_sim.
+    
+    Parameters
+    ----------
+    tracks: single camera tracklets by camera.
+    cams: camera layout of the system
+    min_sim: minimum similarity score between tracklet mean features to merge (default 0.5)
+    linkage: linkage method to use in merging from: ('average', 'single', 'complete')
+    
+    Returns
+    -------
+    mtracks: The final multi-camera tracklets. The single cam tracks contained in each
+    are assigned the new ids.
     """
     flat_tracks = _flatten_tracks_with_cam_info(tracks, cams)
-    flat_tracks.sort(key=lambda x: x.global_end)
+    # flat_tracks.sort(key=lambda x: x.global_end)
 
-    log.debug("Starting greedy mtmc matching of %s tracks.",
+    log.info("Starting greedy mtmc matching of %s tracks.",
               len(flat_tracks))
     log_start_time = time.time()
 
@@ -53,56 +99,62 @@ def greedy_mtmc_matching(tracks: List[List[Tracklet]], cams: CameraLayout, min_s
     for i, track in enumerate(flat_tracks):
         track.dsu_idx = i
 
-    # iterate tracks increasing by their global_end timestamp
+    # min priority queue for storing possible merges
+    # entries are: (-similarity, timestamp, track1, track2)
+    merge_queue = []
+
+    # maintain a timestamp to check whether a tuple retrieved from the queue is valid
+    # (if either track1 or track2 was modified since insertion, it is invalid)
+    for tr in multicam_tracks:
+        tr.timestamp = 0
+    timestamp = 1
+
+    # initialize the queue with all valid pairs
     for track in flat_tracks:
+        mtrack = multicam_tracks[track.dsu_idx]
+        candidates = _get_track_candidates(mtrack, tracks, cams)
+        for cand in candidates:
+            cand_mtrack = multicam_tracks[cand.dsu_idx]
+            merge_queue.append((-multicam_track_similarity(mtrack, cand_mtrack, linkage), timestamp, track.dsu_idx, cand.dsu_idx))
+        
+    # initialize the heap from the list
+    heapq.heapify(merge_queue)
 
-        log.debug("Checking track: %s from cam %s", track, track.cam)
+    # try to merge while the similarity is over min_sim
+    while len(merge_queue) > 0:
+        minus_sim, entry_timestamp, mtrack1_idx, mtrack2_idx = heapq.heappop(merge_queue)
+        if minus_sim >= -min_sim:
+            break
 
-        mtrack_idx = track_dsu.find_root(track.dsu_idx)
-        mtrack = multicam_tracks[mtrack_idx]
-        cams_possible_bmp = cams.cam_compatibility_bitmap(
-            track.cam) & mtrack.inverse_cams()
+        mtrack1 = multicam_tracks[mtrack1_idx]
+        mtrack2 = multicam_tracks[mtrack2_idx]
+        if entry_timestamp < mtrack1.timestamp or entry_timestamp < mtrack2.timestamp:
+            continue
+        if have_mutual_cams(mtrack1, mtrack2):
+            continue
+        
+        # merge mtrack1 and mtrack2
+        timestamp += 1
+        mtrack1.timestamp = timestamp
+        mtrack2.timestamp = timestamp
+        track_dsu.union_sets(mtrack1_idx, mtrack2_idx)
+        new_root = track_dsu.find_root(mtrack1_idx)
+        if new_root == mtrack2_idx:
+            mtrack1_idx, mtrack1, mtrack2_idx, mtrack2 = mtrack2_idx, mtrack2, mtrack1_idx, mtrack1
+        mtrack1.merge_with(mtrack2)
 
-        # iterate all cameras to check matching tracklets
-        for cam in range(cams.n_cams):
-            if not ((1 << cam) & cams_possible_bmp):
+        log.debug("Merged tracks (sim=%s): %s", -minus_sim, list(map(lambda x: (x.cam, x.track_id),mtrack1.tracks)))
+
+        # insert new merge entries
+        timestamp += 1
+        for cand in _get_track_candidates(mtrack1, tracks, cams):
+            mtrack3_idx = track_dsu.find_root(cand.dsu_idx)
+            mtrack3 = multicam_tracks[mtrack3_idx]
+            if have_mutual_cams(mtrack1, mtrack3):
                 continue
-            min_start = track.global_end + cams.dtmin[track.cam][cam]
-            max_start = track.global_end + cams.dtmax[track.cam][cam]
 
-            # we check candidates that start between the given timestamps
-            candidates = _get_tracks_start_between(
-                tracks[cam], min_start, max_start)
-            candidates_w_scores = []
-            for cand in candidates:
-                cand_mtrack_idx = track_dsu.find_root(cand.dsu_idx)
-                cand_mtrack = multicam_tracks[cand_mtrack_idx]
+            heapq.heappush(merge_queue, (-multicam_track_similarity(mtrack1, mtrack3, linkage), timestamp, mtrack1_idx, mtrack3_idx))
 
-                # if the multicam tracklets have a common camera, we cannot merge them
-                if cand_mtrack.cams & mtrack.cams:
-                    continue
-
-                # add the candidate with its similarity score to the list of final candidates
-                candidates_w_scores.append((cand_mtrack_idx,
-                                            cosine_sim(cand_mtrack.mean_feature, mtrack.mean_feature)))
-            log.debug("Candidates: %s", candidates_w_scores)
-            if len(candidates_w_scores) == 0:
-                continue
-            best_cand_idx, best_sim = max(
-                candidates_w_scores, key=lambda x: x[1])
-
-            # merge with the candidate
-            if best_sim >= min_sim:
-                track_dsu.union_sets(mtrack_idx, best_cand_idx)
-                new_root = track_dsu.find_root(mtrack_idx)
-                if new_root == mtrack_idx:
-                    mtrack.merge_with(multicam_tracks[best_cand_idx])
-                else:
-                    mtrack, old_mtrack = multicam_tracks[best_cand_idx], mtrack
-                    mtrack.merge_with(old_mtrack)
-                    mtrack_idx = new_root
-                    cams_possible_bmp = cams.cam_compatibility_bitmap(
-                        track.cam) & mtrack.inverse_cams()
 
     # filter multicam tracks to keep only those that are valid (= it is a root of a set)
     valid_mtracks = [multicam_tracks[idx] for idx in range(
@@ -112,12 +164,36 @@ def greedy_mtmc_matching(tracks: List[List[Tracklet]], cams: CameraLayout, min_s
     for i, mtrack in enumerate(valid_mtracks):
         mtrack.id = i
 
+    # also assign the new id's to the single-cam tracks
+    for mtrack in valid_mtracks:
+        for track in mtrack.tracks:
+            track.track_id = mtrack.id
+
     log_total_time = round(time.time() - log_start_time, 3)
-    log.debug(
+    log.info(
         "greedy mtmc matching took %s seconds: %s final tracks.", log_total_time, len(valid_mtracks))
 
     return valid_mtracks
+    
+    
+def _get_track_candidates(current_track: MulticamTracklet, tracks: List[List[Tracklet]], cams: CameraLayout) -> Set[Tracklet]:
+    """Return the candidates for matching with the current_track from other cameras."""
+    excluded_cams = set(t.cam for t in current_track.tracks)
+    candidates = set()
 
+    for track in current_track.tracks:
+        compat = cams.cam_compatibility_bitmap(track.cam)
+        for cam in range(cams.n_cams):
+            if cam in excluded_cams or (compat & (1 << cam)) == 0:
+                continue
+            dtmin = cams.dtmin[track.cam][cam]
+            dtmax = cams.dtmax[track.cam][cam]
+            min_start, max_start = track.global_end + dtmin, track.global_end + dtmax
+
+            for tr in _get_tracks_start_between(tracks[cam], min_start, max_start):
+                candidates.add(tr)
+
+    return candidates
 
 def _get_tracks_start_between(tracks: List[Tracklet], min_start: int, max_start: int) -> List[Tracklet]:
     """Fetch tracks that start between given timestamps from a sorted list of tracks."""
@@ -172,5 +248,5 @@ if __name__ == "__main__":
             track.compute_mean_feature()
     print(f"Total tracks: {sum(len(tr) for tr in cam_tracks)}")
 
-    res = greedy_mtmc_matching(cam_tracks, cams)
+    res = greedy_mtmc_matching(cam_tracks, cams, linkage="single")
     print(len(res))

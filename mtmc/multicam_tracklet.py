@@ -21,6 +21,9 @@ class MulticamTracklet:
         self._cams = None
         self._n_cams = n_cams
 
+    def __hash__(self):
+        return hash(tuple(t.id for t in self._tracks))
+        
 
     @property
     def tracks(self):
@@ -62,5 +65,9 @@ class MulticamTracklet:
         self._mean_feature = None
         if self._cams is not None:
             for track in other.tracks:
-                self._cams |= track.cam
+                self._cams |= 1 << track.cam
 
+
+def have_mutual_cams(mtrack1: MulticamTracklet, mtrack2: MulticamTracklet) -> bool:
+    """Checks whether two mutlicam tracklets share any cameras."""
+    return bool(mtrack1.cams & mtrack2.cams)

@@ -33,6 +33,28 @@ def parse_args():
 
 
 def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None):
+    """Filter the detected boxes by confidence scores, classes and location.
+    Parameters
+    ----------
+    boxes: list(list)
+        Contains [cx, cy, w, h] for each bounding box.
+    scores: list(float)
+        Confidence scores for each box.
+    classes: list(int)
+        Class label for each box.
+    good_classes: list(int)
+        Class labels that we have to keep, and discard others.
+    min_confid: float
+        Minimal confidence score for a box to be kept.
+    mask: Union[None, np.array(np.uint8)]
+        A 2d detection mask of zeros and ones. If a point is zero, we discard
+        the bounding box whose center lies there, else we keep it.
+
+    Returns
+    ------
+    final_boxes: list(list)
+        The boxes that matched all criteria.
+    """
     good_boxes = []
     for bbox, score, cl in zip(boxes, scores, classes):
         if score < min_confid or cl not in good_classes:
@@ -77,7 +99,7 @@ reid_model = load_model_from_opts(os.path.join(cfg.SYSTEM.ROOT_DIR, cfg.MOT.REID
                                   ckpt=os.path.join(
                                       cfg.SYSTEM.ROOT_DIR, cfg.MOT.REID_MODEL_CKPT),
                                   remove_classifier=True)
-if not cfg.MOT.REID_FP16:
+if cfg.MOT.REID_FP16:
     reid_model.half()
 reid_model.to(device)
 reid_model.eval()

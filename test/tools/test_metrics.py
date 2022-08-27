@@ -8,7 +8,7 @@ def test_iou_full():
     box1 = [0, 10, 200, 200]
     box2 = [100, 100, 50, 50]
     iou_score = iou(box1, box2)
-    assert iou_score == 50 * 50 / (200 * 190)
+    assert abs(iou_score - (50 * 50 / (200 * 200))) < EPS
 
 def test_iou_none():
     box1 = [54, 39, 100, 78]

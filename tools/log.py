@@ -6,9 +6,18 @@ INDENT = "  "
 inited = False
 output_tee_stdout = False
 
+log_level_map = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "warning": logging.WARNING,
+    "error": logging.ERROR,
+}
+
 
 def log_init(log_file, level=logging.DEBUG, tee_stdout=True):
     global inited, output_tee_stdout, log_level
+    if isinstance(level, str):
+        level = log_level_map[level.lower()]
     if inited:
         return
     inited = True

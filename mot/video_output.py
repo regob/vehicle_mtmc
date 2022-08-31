@@ -10,7 +10,7 @@ except ImportError as e:
     print("cv2 import failed, on-the-fly video output not available: {}".format(e))
 
 
-from mot.static_features import FEATURES
+from mot.attributes import STATIC_ATTRIBUTES, DYNAMIC_ATTRIBUTES
 from mot.tracklet_processing import load_tracklets
 
 
@@ -44,12 +44,12 @@ def put_text(img_pil, text, x, y, color, font):
     return img_pil
 
 
-def annotate(img_pil, id_label, static_features, tx, ty, bx, by, color, font):
+def annotate(img_pil, id_label, static_attributes, tx, ty, bx, by, color, font):
     """ Put the id label and the features as text below or above of a bounding box. """
 
     draw = ImageDraw.Draw(img_pil)
-    text = [id_label] + [f"{k}: {FEATURES[k][v]}" for k,
-                         v in static_features.items()]
+    text = [id_label] + [f"{k}: {STATIC_ATTRIBUTES[k][v]}" for k,
+                         v in static_attributes.items()]
     text = "\n".join(text)
 
     textcoords = draw.multiline_textbbox((tx, by), text, font=font)
@@ -73,10 +73,10 @@ class Video:
         self.frame_font = ImageFont.truetype(font, 18)
         self.frame_num = 0
 
-    def render_tracks(self, frame, track_ids, track_bboxes, static_features):
+    def render_tracks(self, frame, track_ids, track_bboxes, static_attributes):
         overlay = Image.fromarray(
             np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8))
-        for track_id, bbox, static_f in zip(track_ids, track_bboxes, static_features):
+        for track_id, bbox, static_f in zip(track_ids, track_bboxes, static_attributes):
             tx, ty, w, h = bbox
             bx, by = int(tx + w), int(ty + h)
             color = self.colors[int(track_id) % len(self.colors)]
@@ -103,8 +103,8 @@ class DisplayVideo(Video):
         cv2.namedWindow("tracking", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("tracking", width, height)
 
-    def update(self, frame, track_ids, bboxes, static_features):
-        frame = self.render_tracks(frame, track_ids, bboxes, static_features)
+    def update(self, frame, track_ids, bboxes, static_attributes):
+        frame = self.render_tracks(frame, track_ids, bboxes, static_attributes)
         cv2.imshow("tracking", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
         cv2.waitKey(1)
 
@@ -118,8 +118,8 @@ class FileVideo(Video):
         self.video = imageio.get_writer(save_path, format=format, mode=mode,
                                         fps=fps, codec=codec)
 
-    def update(self, frame, track_ids, bboxes, static_features):
-        frame = self.render_tracks(frame, track_ids, bboxes, static_features)
+    def update(self, frame, track_ids, bboxes, static_attributes):
+        frame = self.render_tracks(frame, track_ids, bboxes, static_attributes)
         self.video.append_data(frame)
 
     def close(self):
@@ -152,7 +152,7 @@ def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack
 
             try:
                 static_refined = isinstance(
-                    next(iter(track.static_features.values())), int)
+                    next(iter(track.static_attributes.values())), int)
             except StopIteration:
                 static_refined = True
 
@@ -161,10 +161,10 @@ def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack
                 bboxes.append(track.bboxes[ptr])
 
                 if static_refined:
-                    static_f.append(track.static_features)
+                    static_f.append(track.static_attributes)
                 else:
                     static_f.append({k: v[ptr]
-                                     for k, v in track.static_features.items()})
+                                     for k, v in track.static_attributes.items()})
 
                 if ptr >= len(track.frames) - 1:
                     ended_tracks.append(track_idx)

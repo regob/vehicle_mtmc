@@ -1,9 +1,11 @@
+import os
+import sys
+import logging
+import argparse
+import imageio
 import torch
 import numpy as np
-import os
 from PIL import Image
-import imageio
-import argparse
 
 # repository imports (PYTHONPATH needs to be set)
 from mot.deep_sort import preprocessing, nn_matching
@@ -11,7 +13,7 @@ from mot.deep_sort.detection import Detection
 from mot.deep_sort.tracker import Tracker
 from mot.tracklet import Tracklet
 from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets
-from mot.static_features import StaticFeatureExtractor
+from mot.attributes import AttributeExtractor
 from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_tracklets
 from mot.zones import ZoneMatcher
 
@@ -22,14 +24,53 @@ from detection.load_detector import load_yolo
 
 from tools.util import FrameRateCounter
 from tools.preprocessing import create_extractor
+from tools import log
 from config.defaults import get_cfg_defaults
+from config.verify_config import check_mot_config, global_checks
 
+
+########################################
+# Parse args and configuration
+########################################
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Run Multi-object tracker on a video.")
     parser.add_argument("--config", help="config yaml file")
+    parser.add_argument("--log_level", default="info", help="logging level")
+    parser.add_argument("--log_filename", default="mot_log.txt",
+                        help="log file under output dir")
+    parser.add_argument("--tee_stdout", default=True,
+                        type=bool, help="show log on stdout too")
     return parser.parse_args()
+
+
+args = parse_args()
+cfg = get_cfg_defaults()
+if args.config:
+    cfg.merge_from_file(os.path.join(cfg.SYSTEM.CFG_DIR, args.config))
+cfg.freeze()
+
+# initialize output directory and logging
+if not global_checks["OUTPUT_DIR"](cfg.OUTPUT_DIR):
+    log.error(
+        "Invalid param value in: OUTPUT_DIR. Provide an absolute path to a directory, whose parent exists.")
+    sys.exit(2)
+if not os.path.exists(cfg.OUTPUT_DIR):
+    os.makedirs(cfg.OUTPUT_DIR)
+
+
+log.log_init(os.path.join(cfg.OUTPUT_DIR, args.log_filename),
+             args.log_level, args.tee_stdout)
+
+# check and verify config (has to be done after logging init to see errors)
+if not check_mot_config(cfg):
+    sys.exit(2)
+
+
+########################################
+# utils
+########################################
 
 
 def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None):
@@ -73,20 +114,8 @@ def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None
 
 
 ########################################
-# Parse args and configuration
-########################################
-
-args = parse_args()
-cfg = get_cfg_defaults()
-if args.config:
-    cfg.merge_from_file(os.path.join(cfg.SYSTEM.CFG_DIR, args.config))
-cfg.freeze()
-
-
-########################################
 # Loading models, initialization
 ########################################
-
 max_cosine_distance = 0.4
 nn_budget = None
 nms_max_overlap = 0.85

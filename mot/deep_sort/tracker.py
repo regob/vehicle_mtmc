@@ -135,5 +135,5 @@ class Tracker:
         class_name = detection.get_class()
         self.tracks.append(Track(
             mean, covariance, self._next_id, self.n_init, self.max_age,
-            detection.feature, class_name))
+            detection, class_name))
         self._next_id += 1

@@ -1,6 +1,6 @@
 from scipy.cluster import vq
 import numpy as np
-from mot.static_features import FEATURES
+from mot.attributes import STATIC_ATTRIBUTES, DYNAMIC_ATTRIBUTES
 
 
 class Tracklet:
@@ -24,7 +24,10 @@ class Tracklet:
         self.conf = []
 
         # static features of the track
-        self.static_features = {}
+        self.static_attributes = {}
+
+        # dynamic attributes of the track
+        self.dynamic_attributes = {}
 
         # global attributes in multi-camera systems, not used in MOT
         self.cam = None
@@ -36,15 +39,18 @@ class Tracklet:
     def __hash__(self):
         return hash(self.track_id)
 
-    def update(self, frame_num, bbox, conf, feature, static_features=None, zone_id=None):
+    def update(self, frame_num, bbox, conf, feature, static_attributes=None, dynamic_attributes=None, zone_id=None):
         """Add a new detection to the track."""
         self.features.append(feature)
         self.frames.append(frame_num)
         self.bboxes.append(bbox)
         self.conf.append(conf)
-        if static_features:
-            for k, v in static_features.items():
-                self.static_features.setdefault(k, []).append(v)
+        if static_attributes:
+            for k, v in static_attributes.items():
+                self.static_attributes.setdefault(k, []).append(v)
+        if dynamic_attributes:
+            for k, v in dynamic_attributes.items():
+                self.dynamic_attributes.setdefault(k, []).append(v)
         if zone_id is not None:
             self.zones.append(zone_id)
 
@@ -87,19 +93,25 @@ class Tracklet:
         self.features = [feature for feature in centroids]
         return self.features
 
-    def predict_final_static_features(self):
+    def predict_final_static_attributes(self):
         """Update the static features to describe the whole track instead of frame-by-frame values."""
         static_f = {}
-        for k, v in self.static_features.items():
-            if type(v) == int:
+        for k, v in self.static_attributes.items():
+            if isinstance(v, int):
+                # the attributes are alredy finalized
                 return
-            preds = np.zeros((len(FEATURES[k]), ))
-            for pred, bbox in zip(v, self.bboxes):
-                x, y, w, h = bbox
-                preds[pred] += w * h
+            preds = np.zeros((len(STATIC_ATTRIBUTES[k]), ))
+
+            # there is an attribute for each frame (this is preferred)
+            if len(v) == len(self.bboxes):
+                for pred, bbox in zip(v, self.bboxes):
+                    preds[pred] += bbox[2] * bbox[3]
+            else:
+                for pred in v:
+                    preds[pred] += 1
 
             static_f[k] = int(preds.argmax())
-        self.static_features = static_f
+        self.static_attributes = static_f
         return static_f
 
     def zone_enter_leave_frames(self, zone_id):

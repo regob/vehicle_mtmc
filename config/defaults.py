@@ -20,7 +20,8 @@ C.SYSTEM.GPU_IDS = [0]
 # Global output config
 ################################################################################
 
-# Root directory to save all outputs into (to be overridden)
+# Absolute path to root directory to save all outputs into (to be overridden)
+# it makes sense to provide a new directory under output, e.g output/run_1
 C.OUTPUT_DIR = None
 
 ################################################################################
@@ -46,6 +47,9 @@ C.MOT.REID_BATCHSIZE = 8
 # object detector (yolov5s, yolov5m, yolov5l, other yolov5 versions)
 C.MOT.DETECTOR = "yolov5l"
 
+# tracker to use ('deepsort' 'fairmot')
+C.MOT.TRACKER = "deepsort"
+
 # path to the detection mask image showing the ROI (region of interest)
 # in the image white pixels are included, while others (black ones) are excluded
 C.MOT.DETECTION_MASK = None
@@ -70,14 +74,14 @@ C.MOT.MIN_FRAMES = 10
 # 1. convolutional neural net determining the feature from the image patch
 # 2. fully connected neural net, that gets the reid feature as an input
 # e.g: {"color": "path_to_color_model.pth"}
-C.MOT.STATIC_FEATURES = []
+C.MOT.STATIC_ATTRIBUTES = {}
 
 # dict of feature_name:model_path pairs describing dynamic feature extracting models
-# constraints are the same as above at STATIC_FEATURES
-C.MOT.DYNAMIC_FEATURES = []
+# constraints are the same as above at STATIC_ATTRIBUTES
+C.MOT.DYNAMIC_ATTRIBUTES = {}
 
-# batch_size for static and dynamic feature inference
-C.MOT.FEATURE_BATCHSIZE = 8
+# batch_size for static and dynamic attribute inference
+C.MOT.ATTRIBUTE_INFER_BATCHSIZE = 8
 
 # regular expressions describing valid paths of zones for tracks
 # e.g: If only tracks that start and end in (zone 1 and 2) or (3 and 4) are good: ["1,.*,2", "3,.*,4"]

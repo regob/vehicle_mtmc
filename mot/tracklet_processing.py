@@ -31,7 +31,9 @@ def to_detections(tracklets):
         "bbox_height": [],
         "track_id": [],
     }
-    for k in tracklets[0].static_features:
+    for k in tracklets[0].static_attributes:
+        res[k] = []
+    for k in tracklets[0].dynamic_attributes:
         res[k] = []
     if tracklets[0].zones:
         res["zone"] = []
@@ -44,10 +46,12 @@ def to_detections(tracklets):
             res["bbox_width"].append(w)
             res["bbox_height"].append(h)
         res["track_id"].extend([tracklet.track_id] * len(tracklet.frames))
-        for static_f, val in tracklet.static_features.items():
+        for static_f, val in tracklet.static_attributes.items():
             values = val if isinstance(val, list) else [
                 val] * len(tracklet.frames)
             res[static_f].extend(values)
+        for dynamic_f, val in tracklet.dynamic_attributes.items():
+            res[dynamic_f].extend(val)
         if tracklet.zones:
             res["zone"].extend(tracklet.zones)
 
@@ -92,16 +96,20 @@ def split_tracklet(tracklet, frame_idx, new_track_id):
     track1.bboxes = tracklet.bboxes[:frame_idx]
     track1.zones = tracklet.zones[:frame_idx]
     track1.conf = tracklet.conf[:frame_idx]
-    track1.static_features = {k: v[:frame_idx]
-                              for k, v in tracklet.static_features.items()}
+    track1.static_attributes = {k: v[:frame_idx]
+                                for k, v in tracklet.static_attributes.items()}
+    track1.dynamic_attributes = {k: v[:frame_idx]
+                                 for k, v in tracklet.dynamic_attributes.items()}
 
     track2.features = tracklet.features[frame_idx:]
     track2.frames = tracklet.frames[frame_idx:]
     track2.bboxes = tracklet.bboxes[frame_idx:]
     track2.zones = tracklet.zones[frame_idx:]
     track2.conf = tracklet.conf[frame_idx:]
-    track2.static_features = {k: v[frame_idx:]
-                              for k, v in tracklet.static_features.items()}
+    track2.static_attributes = {k: v[frame_idx:]
+                                for k, v in tracklet.static_attributes.items()}
+    track2.dynamic_attributes = {k: v[frame_idx:]
+                                 for k, v in tracklet.dynamic_attributes.items()}
     return track1, track2
 
 
@@ -111,8 +119,12 @@ def join_tracklets(track1, track2):
     track1.features.extend(track2.features)
     track1.bboxes.extend(track2.bboxes)
     track1.zones.extend(track2.zones)
-    for feature in track1.static_features:
-        track1.static_features[feature].extend(track2.static_features[feature])
+    for feature in track1.static_attributes:
+        track1.static_attributes[feature].extend(
+            track2.static_attributes[feature])
+    for feature in track1.dynamic_attributes:
+        track1.dynamic_attributes[feature].extend(
+            track2.dynamic_attributes[feature])
     return track1
 
 

@@ -5,6 +5,7 @@ log_level = logging.DEBUG
 INDENT = "  "
 inited = False
 output_tee_stdout = False
+logger = None
 
 log_level_map = {
     "debug": logging.DEBUG,
@@ -15,7 +16,7 @@ log_level_map = {
 
 
 def log_init(log_file, level=logging.DEBUG, tee_stdout=True):
-    global inited, output_tee_stdout, log_level
+    global inited, output_tee_stdout, log_level, logger
     if isinstance(level, str):
         level = log_level_map[level.lower()]
     if inited:
@@ -24,6 +25,7 @@ def log_init(log_file, level=logging.DEBUG, tee_stdout=True):
     output_tee_stdout = tee_stdout
     log_level = level
     logging.basicConfig(filename=log_file, level=level)
+    logger = logging.getLogger()
 
 
 def inc_depth():
@@ -62,5 +64,6 @@ def log_function(log_func, msg, *args):
         print(msg)
     else:
         log_func(msg)
+        logger.handlers[0].flush()
         if output_tee_stdout and _log_levels.index(log_level) <= _log_funcs.index(log_func):
             print(msg)

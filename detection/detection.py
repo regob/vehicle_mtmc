@@ -35,7 +35,7 @@ class Detection(object):
         self.confidence = float(confidence)
         self.class_index = class_idx
         self.feature = np.asarray(feature, dtype=np.float32)
-        
+
     def get_class(self):
         return self.class_index
 

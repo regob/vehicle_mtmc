@@ -64,6 +64,7 @@ def extract_image_patch(image, bbox, patch_shape=None):
     return image
 
 
+
 def create_extractor(extractor_class, batch_size=32, image_shape=(224, 224), **kwargs):
     image_encoder = extractor_class(**kwargs)
     img_transform = T.Compose([T.ToTensor(), T.Normalize(

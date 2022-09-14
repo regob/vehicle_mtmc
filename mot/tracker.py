@@ -1,7 +1,7 @@
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Set
 import numpy as np
 
-from mot.detection import Detection
+from detection.detection import Detection
 from mot.tracklet import Tracklet
 from mot.zones import ZoneMatcher
 from mot.deep_sort import preprocessing, nn_matching
@@ -16,19 +16,23 @@ class TrackerBase:
         self._zone_matcher = zone_matcher
 
     @property
-    def tracks(self):
+    def tracks(self) -> Dict[int, Tracklet]:
+        """Dictionary of tracks keyed by ids."""
         return self._tracks
 
     @property
-    def active_track_ids(self):
+    def active_track_ids(self) -> Set[int]:
+        """Set of active track ids."""
         return self._active_track_ids
+
+    @property
+    def active_tracks(self) -> List[Tracklet]:
+        """List of active track objects."""
+        return [self._tracks[i] for i in self._active_track_ids]
 
     def update(self, frame_num: int, detections: List[Detection], static_attributes: Union[Dict, None] = None,
                dynamic_attributes: Union[Dict, None] = None):
         raise NotImplementedError()
-
-    def active_tracks(self):
-        return [self._tracks[i] for i in self._active_track_ids]
 
 
 class DeepsortTracker(TrackerBase):
@@ -59,14 +63,20 @@ class DeepsortTracker(TrackerBase):
                dynamic_attributes: Union[Dict, None] = None):
         """Update the tracker with detections from a new frame."""
 
-        # monkey patch attributes to detections to make it easier 
+        # monkey patch attributes to detections to make it easier
         # when retrieving the tracks after the update
         for i, det in enumerate(detections):
             if static_attributes:
-                det.static_attributes = {k: static_attributes[k][i] for k in static_attributes}
+                det.static_attributes = {
+                    k: static_attributes[k][i] for k in static_attributes}
+            else:
+                det.static_attributes = {}
             if dynamic_attributes:
-                det.dynamic_attributes = {k: dynamic_attributes[k][i] for k in dynamic_attributes}
-                
+                det.dynamic_attributes = {
+                    k: dynamic_attributes[k][i] for k in dynamic_attributes}
+            else:
+                det.dynamic_attributes = {}
+
         self._tracker.predict()
         self._tracker.update(detections)
 
@@ -76,16 +86,13 @@ class DeepsortTracker(TrackerBase):
                 self._tracks[track.track_id] = Tracklet(track.track_id)
             if track.time_since_update > 1:
                 continue
-            
+
             self._active_track_ids.add(track.track_id)
             tracklet = self._tracks[track.track_id]
             det = track.last_detection
-            cx, cy = int(det.tlwh[0] + det.tlwh[2] / 2), int(det.tlwh[1] + det.tlwh[3] / 2)
-            zone_id = self._zone_matcher.find_zone_for_point(cx, cy) if self._zone_matcher is not None else None
+            cx, cy = int(det.tlwh[0] + det.tlwh[2] /
+                         2), int(det.tlwh[1] + det.tlwh[3] / 2)
+            zone_id = self._zone_matcher.find_zone_for_point(
+                cx, cy) if self._zone_matcher else None
             tracklet.update(frame_num, det.tlwh, det.confidence, det.feature, det.static_attributes,
                             det.dynamic_attributes, zone_id)
-            
-            
-            
-        
-        

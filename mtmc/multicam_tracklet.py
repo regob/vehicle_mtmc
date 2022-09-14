@@ -15,7 +15,8 @@ class MulticamTracklet:
         """
         self.id = new_id
         if len(single_cam_tracks) == 0:
-            raise ValueError("Invalid single_cam_tracks, at least one is needed.")
+            raise ValueError(
+                "Invalid single_cam_tracks, at least one is needed.")
         self._tracks = single_cam_tracks
         self._mean_feature = None
         self._cams = None
@@ -23,7 +24,9 @@ class MulticamTracklet:
 
     def __hash__(self):
         return hash(tuple(t.id for t in self._tracks))
-        
+
+    def __eq__(self, other):
+        return id(self) == id(other)
 
     @property
     def tracks(self):
@@ -34,7 +37,7 @@ class MulticamTracklet:
     def n_cams(self):
         """Total number of cameras in the system."""
         return self._n_cams
-    
+
     @property
     def mean_feature(self):
         """Mean feature of all single cam tracklets."""

@@ -29,3 +29,4 @@ class Timer:
         print("Call ({}) took {:.5f} seconds.".format(
             callname, time.time() - Timer.t))
         Timer.t = time.time()
+

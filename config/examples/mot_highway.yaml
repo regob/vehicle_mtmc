@@ -1,0 +1,22 @@
+OUTPUT_DIR: "output/mot_highway"
+MOT:
+ VIDEO: "datasets/highway.mp4"
+ REID_MODEL_OPTS: "reid/vehicle_reid/model/new_resnet_verzal_ce/opts.yaml"
+ REID_MODEL_CKPT: "reid/vehicle_reid/model/new_resnet_verzal_ce/net_19.pth"
+ REID_FP16: true
+ REID_BATCHSIZE: 1
+ DETECTOR: "yolov5x6"
+ TRACKER: "deepsort"
+ DETECTION_MASK: "assets/highway_mask.jpg"
+ SHOW: true
+ VIDEO_OUTPUT: true
+ STATIC_ATTRIBUTES:
+   - color: "models/color_net_verzal.pth"
+   - type: "models/type_net_verzal.pth"
+ ATTRIBUTE_INFER_BATCHSIZE: 1
+ ZONE_MASK_DIR: "assets/zones/highway/"
+ VALID_ZONEPATHS:
+   - "^(1,)+(0(,0)*,)?2(,2)*$"
+   - "^(4,)+(0(,0)*,)?3(,3)*$"
+ REFINE: false
+   

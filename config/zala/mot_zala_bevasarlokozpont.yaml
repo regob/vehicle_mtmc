@@ -1,12 +1,12 @@
-OUTPUT_DIR: "output/zala_balaton"
+OUTPUT_DIR: "output/zala_bevasarlokozpont"
 MOT:
- VIDEO: "datasets/Zalaegerszeg/balaton.mp4"
+ VIDEO: "datasets/Zalaegerszeg/bevasarlokozpont.mp4"
  REID_MODEL_OPTS: "reid/vehicle_reid/model/new_resnet_verzal_ce/opts.yaml"
  REID_MODEL_CKPT: "reid/vehicle_reid/model/new_resnet_verzal_ce/net_19.pth"
  REID_FP16: false
  REID_BATCHSIZE: 1
  DETECTOR: "yolov5x6"
- DETECTION_MASK: "assets/balaton_mask.jpg"
+ DETECTION_MASK: "assets/bevasarlokozpont_mask.jpg"
  TRACKER: "bytetrack_iou"
  SHOW: false
  VIDEO_OUTPUT: false
@@ -14,7 +14,7 @@ MOT:
    - color: "models/color_net_verzal.pth"
    - type: "models/type_net_verzal_2.pth"
  ATTRIBUTE_INFER_BATCHSIZE: 1
- ZONE_MASK_DIR: "assets/zones/balaton/"
+ ZONE_MASK_DIR: "assets/zones/bevasarlokozpont/"
  VALID_ZONEPATHS:
    - "^(1,)+(0(,0)*,)?2(,2)*$"
    - "^(2,)+(0(,0)*,)?1(,1)*$"

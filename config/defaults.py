@@ -6,8 +6,8 @@ Whenever a path is needed an absolute path or a relative path from the root repo
 to be provided.
 """
 
-from yacs.config import CfgNode as CN
 from pathlib import Path
+from yacs.config import CfgNode as CN
 
 
 C = CN()
@@ -49,7 +49,7 @@ C.MOT.REID_MODEL_OPTS = None
 C.MOT.REID_MODEL_CKPT = None
 
 # use half precision (fp16) instead of fp32 in reid model
-C.MOT.REID_FP16 = True
+C.MOT.REID_FP16 = False
 
 # batch size for running the reid model
 C.MOT.REID_BATCHSIZE = 1
@@ -61,7 +61,7 @@ C.MOT.DETECTOR = "yolov5l"
 # only bike, car, motorbike, bus, truck classes are default (yolov5)
 C.MOT.TRACKED_CLASSES = [1, 2, 3, 5, 7]
 
-# tracker to use ('deepsort' 'fairmot')
+# tracker to use ('deepsort' 'bytetrack_iou')
 C.MOT.TRACKER = "deepsort"
 
 # path to the detection mask image showing the ROI (region of interest)

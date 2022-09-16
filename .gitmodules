@@ -8,6 +8,3 @@
 	path = reid/vehicle_reid
 	url = ../vehicle_reid
 	branch = master
-[submodule "mot/FairMOT"]
-	path = mot/FairMOT
-	url = git@github.com:regob/FairMOT.git

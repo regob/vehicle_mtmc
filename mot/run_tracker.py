@@ -10,7 +10,7 @@ from PIL import Image
 from mot.deep_sort import preprocessing, nn_matching
 from mot.tracklet import Tracklet
 from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets
-from mot.tracker import DeepsortTracker
+from mot.tracker import DeepsortTracker, ByteTrackerIOU
 from mot.attributes import AttributeExtractorMixed
 from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_tracklets
 from mot.zones import ZoneMatcher
@@ -149,17 +149,30 @@ extractor = create_extractor(FeatureExtractor, batch_size=cfg.MOT.REID_BATCHSIZE
                              model=reid_model)
 
 
+# load input video
+video_in = imageio.get_reader(cfg.MOT.VIDEO)
+video_meta = video_in.get_meta_data()
+video_w, video_h = video_meta["size"]
+video_frames = video_in.count_frames()
+video_fps = video_meta["fps"]
+
 # initialize zone matching
 if cfg.MOT.ZONE_MASK_DIR and cfg.MOT.VALID_ZONEPATHS:
     zone_matcher = ZoneMatcher(cfg.MOT.ZONE_MASK_DIR, cfg.MOT.VALID_ZONEPATHS)
+else:
+    zone_matcher = None
 
 # initialize tracker
-if cfg.MOT.TRACKER == "fairmot":
-    raise NotImplementedError("whoops, Fairmot not yet implemented.")
-else:
+if cfg.MOT.TRACKER == "deepsort":
     tracker = DeepsortTracker(metric, max_cosine_distance, nn_budget, n_init=3,
                               zone_matcher=zone_matcher)
-
+    MIN_CONFID = 0.5
+elif cfg.MOT.TRACKER == "bytetrack_iou":
+    tracker = ByteTrackerIOU(video_fps, zone_matcher=zone_matcher)
+    MIN_CONFID = 0.2
+else:
+    raise ValueError("Tracker not implemented.")
+        
 # load detector
 detector = load_yolo(cfg.MOT.DETECTOR)
 detector.to(device)
@@ -182,11 +195,6 @@ else:
     dynamic_extractor = None
 
 
-# load input video
-video_in = imageio.get_reader(cfg.MOT.VIDEO)
-video_meta = video_in.get_meta_data()
-video_w, video_h = video_meta["size"]
-video_frames = video_in.count_frames()
 
 # load input mask if any
 if cfg.MOT.DETECTION_MASK is not None:
@@ -230,7 +238,7 @@ for frame_num, frame in enumerate(video_in):
     classes = [t[5] for t in res]
 
     boxes = filter_boxes(boxes, scores, classes,
-                         cfg.MOT.TRACKED_CLASSES, 0.4, det_mask)
+                         cfg.MOT.TRACKED_CLASSES, MIN_CONFID, det_mask)
 
     boxes_tlwh = [[int(x - w / 2), int(y - h / 2), w, h]
                   for x, y, w, h in boxes]
@@ -240,9 +248,9 @@ for frame_num, frame in enumerate(video_in):
                   for bbox, score, clname, feature in zip(boxes_tlwh, scores, classes, features)]
     features = torch.tensor(features)
 
-    boxs = np.array([d.tlwh for d in detections], dtype=np.int)
+    boxs = np.array([d.tlwh for d in detections], dtype=int)
     scores = np.array([d.confidence for d in detections])
-    classes = np.array([d.get_class() for d in detections], dtype=np.int)
+    classes = np.array([d.get_class() for d in detections], dtype=int)
 
     # run non-maxima supression
     indices = preprocessing.non_max_suppression(
@@ -266,12 +274,11 @@ for frame_num, frame in enumerate(video_in):
     active_track_bboxes_tlwh = [tr.bboxes[-1] for tr in active_tracks]
 
     all_attribs_list = [{} for _ in range(len(active_track_ids))]
-    for k, v in dynamic_attribs.items():
-        for i, attr in enumerate(v):
-            all_attribs_list[i][k] = attr
-    for k, v in static_attribs.items():
-        for i, attr in enumerate(v):
-            all_attribs_list[i][k] = attr
+    for i, track in enumerate(active_tracks):
+        for k, v in track.static_attributes.items():
+            all_attribs_list[i][k] = v[-1]
+        for k, v in track.dynamic_attributes.items():
+            all_attribs_list[i][k] = v[-1]
 
     log.debug(
         f"Frame {frame_num}: active_track_ids: {active_track_ids}, frame type: {type(frame)}, {frame.dtype}, {frame.shape} .")
@@ -288,6 +295,8 @@ for frame_num, frame in enumerate(video_in):
     print("\rFrame: {}/{}, fps: {:.3f}".format(
         frame_num, video_frames, fps_counter.value()), end="")
 
+
+log.info(f"Tracking finished over {video_frames} frames, average fps: {fps_counter.value()}.")
 ########################################
 # Run postprocessing and save results
 ########################################
@@ -308,10 +317,10 @@ final_tracks = list(filter(lambda track: len(
 for track in final_tracks:
     track.predict_final_static_attributes()
 
-print("\nTracking done. #Tracklets: {}".format(len(final_tracks)))
+log.info("\nTracking done. #Tracklets: {}".format(len(final_tracks)))
 if cfg.MOT.REFINE:
     final_tracks = refine_tracklets(final_tracks, zone_matcher)[0]
-    print("Refinement done. #Tracklets remain: {}".format(len(final_tracks)))
+    log.info("Refinement done. #Tracklets remain: {}".format(len(final_tracks)))
 
 
 if cfg.MOT.VIDEO_OUTPUT:

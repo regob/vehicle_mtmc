@@ -47,6 +47,7 @@ def annotate(img_pil, id_label, attributes, tx, ty, bx, by, color, font):
     """ Put the id label and the features as text below or above of a bounding box. """
 
     draw = ImageDraw.Draw(img_pil)
+    draw.rectangle([tx, ty, bx, by], outline=color, width=2)
     text = [id_label] + [f"{k}: {get_attribute_value(k, v)}" for k,
                          v in attributes.items()]
     text = "\n".join(text)
@@ -60,7 +61,7 @@ def annotate(img_pil, id_label, attributes, tx, ty, bx, by, color, font):
         txt_y = by
 
     draw.multiline_text(
-        (tx, txt_y), text, (color[0], color[1], color[2], 255), font=font)
+        (tx, txt_y), text, color, font=font)
     return img_pil
 
 
@@ -79,8 +80,7 @@ class Video:
             tx, ty, w, h = bbox
             bx, by = int(tx + w), int(ty + h)
             color = self.colors[int(track_id) % len(self.colors)]
-            color = [int(i * 255) for i in color]
-            frame = draw_rectangle(frame, tx, ty, w, h, color, 1)
+            color = tuple(int(i * 255) for i in color)
 
             overlay = annotate(overlay, str(track_id), attrib,
                                tx, ty, bx, by, color, self.font)

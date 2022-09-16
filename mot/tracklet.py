@@ -39,9 +39,10 @@ class Tracklet:
     def __hash__(self):
         return hash(self.track_id)
 
-    def update(self, frame_num, bbox, conf, feature, static_attributes=None, dynamic_attributes=None, zone_id=None):
+    def update(self, frame_num, bbox, conf, feature=None, static_attributes=None, dynamic_attributes=None, zone_id=None):
         """Add a new detection to the track."""
-        self.features.append(feature)
+        if feature is not None:
+            self.features.append(feature)
         self.frames.append(frame_num)
         self.bboxes.append(bbox)
         self.conf.append(conf)
@@ -94,7 +95,7 @@ class Tracklet:
         return self.features
 
     def predict_final_static_attributes(self):
-        """Update the static features to describe the whole track instead of frame-by-frame values."""
+        """Update the static attributes to describe the whole track instead of frame-by-frame values."""
         static_f = {}
         for k, v in self.static_attributes.items():
             if isinstance(v, int):

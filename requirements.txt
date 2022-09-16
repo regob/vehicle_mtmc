@@ -13,9 +13,8 @@ motmetrics>=1.2.5
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.5
 yacs>=0.1.8
-opencv-python>=4.5.5.64
+opencv-python==4.5.5.64
 requests>=2.25.1
-
-
-
-
+lap
+cython
+cython_bbox

@@ -1,3 +1,5 @@
+"""Interfaces to the different trackers."""
+
 from typing import List, Union, Dict, Set
 import numpy as np
 
@@ -6,6 +8,8 @@ from mot.tracklet import Tracklet
 from mot.zones import ZoneMatcher
 from mot.deep_sort import preprocessing, nn_matching
 from mot.deep_sort.tracker import Tracker
+from mot.byte_track.byte_tracker import BYTETracker, STrack
+from tools import log
 
 
 class TrackerBase:
@@ -33,6 +37,24 @@ class TrackerBase:
     def update(self, frame_num: int, detections: List[Detection], static_attributes: Union[Dict, None] = None,
                dynamic_attributes: Union[Dict, None] = None):
         raise NotImplementedError()
+
+
+def monkey_patch_detections(detections: List[Detection],
+                            static_attributes: Union[Dict, None] = None,
+                            dynamic_attributes: Union[Dict, None] = None):
+    """monkey patch attributes to detections."""
+    for i, det in enumerate(detections):
+        if static_attributes:
+            det.static_attributes = {
+                k: static_attributes[k][i] for k in static_attributes}
+        else:
+            det.static_attributes = {}
+        if dynamic_attributes:
+            det.dynamic_attributes = {
+                k: dynamic_attributes[k][i] for k in dynamic_attributes}
+        else:
+            det.dynamic_attributes = {}
+    return detections
 
 
 class DeepsortTracker(TrackerBase):
@@ -63,20 +85,8 @@ class DeepsortTracker(TrackerBase):
                dynamic_attributes: Union[Dict, None] = None):
         """Update the tracker with detections from a new frame."""
 
-        # monkey patch attributes to detections to make it easier
-        # when retrieving the tracks after the update
-        for i, det in enumerate(detections):
-            if static_attributes:
-                det.static_attributes = {
-                    k: static_attributes[k][i] for k in static_attributes}
-            else:
-                det.static_attributes = {}
-            if dynamic_attributes:
-                det.dynamic_attributes = {
-                    k: dynamic_attributes[k][i] for k in dynamic_attributes}
-            else:
-                det.dynamic_attributes = {}
-
+        detections = monkey_patch_detections(
+            detections, static_attributes, dynamic_attributes)
         self._tracker.predict()
         self._tracker.update(detections)
 
@@ -96,3 +106,80 @@ class DeepsortTracker(TrackerBase):
                 cx, cy) if self._zone_matcher else None
             tracklet.update(frame_num, det.tlwh, det.confidence, det.feature, det.static_attributes,
                             det.dynamic_attributes, zone_id)
+
+
+class ByteTrackerOpts:
+    def __init__(self, track_conf_thresh, new_track_conf_thresh, track_match_thresh, lost_track_keep_seconds):
+        self.track_thresh = track_conf_thresh
+        self.det_thresh = new_track_conf_thresh
+        self.track_buffer = 30 * lost_track_keep_seconds
+        self.match_thresh = track_match_thresh
+        self.mot20 = False
+
+
+class ByteTrackerIOU(TrackerBase):
+    def __init__(self,
+                 frame_rate=30,
+                 track_conf_thresh=0.5,
+                 new_track_conf_thresh=0.4,
+                 track_match_thresh=0.8,
+                 lost_track_keep_seconds=1,
+                 zone_matcher: Union[ZoneMatcher, None] = None,
+                 ):
+        super().__init__(zone_matcher)
+        byte_track_opts = ByteTrackerOpts(track_conf_thresh, new_track_conf_thresh,
+                                          track_match_thresh, lost_track_keep_seconds)
+        self._tracker = BYTETracker(
+            args=byte_track_opts, frame_rate=frame_rate)
+
+    def update(self,
+               frame_num: int,
+               detections: List[Detection],
+               static_attributes: Union[Dict, None] = None,
+               dynamic_attributes: Union[Dict, None] = None):
+        """Update the tracker with detections from a new frame."""
+
+        detections = monkey_patch_detections(
+            detections, static_attributes, dynamic_attributes)
+
+        # create input for bytetrack in the form of tlbr + score records
+        byte_input = np.zeros((len(detections), 5), np.float)
+        for i, det in enumerate(detections):
+            byte_input[i, :4] = det.to_tlbr()
+            byte_input[i, 4] = det.confidence
+
+        stracks = self._tracker.update(byte_input)
+        log.debug(f"Detections: {len(detections)}, active tracks: {len(stracks)}.")
+
+        self._active_track_ids = set()
+        for strack in stracks:
+            if strack.track_id not in self._tracks:
+                self._tracks[strack.track_id] = Tracklet(strack.track_id)
+            self._active_track_ids.add(strack.track_id)
+            track = self._tracks[strack.track_id]
+
+            det = detections[strack.last_det_idx]
+            cx, cy = int(det.tlwh[0] + det.tlwh[2] /
+                         2), int(det.tlwh[1] + det.tlwh[3] / 2)
+            zone_id = self._zone_matcher.find_zone_for_point(
+                cx, cy) if self._zone_matcher else None
+            track.update(frame_num, det.tlwh, det.confidence, det.feature, det.static_attributes,
+                         det.dynamic_attributes, zone_id)
+
+
+def _match_detections_to_stracks(detections: List[Detection], stracks: List[STrack]):
+
+    def same(tlwh1, tlwh2):
+        return all(abs(a - b) <= 2 for a, b in zip(tlwh1, tlwh2))
+
+    matches = []
+    for strack in stracks:
+        for det in detections:
+            if same(strack.tlwh, det.tlwh):
+                matches.append((strack, det))
+                break
+        else:
+            pass
+            # print(strack.tlwh)
+            # raise ValueError("Strack not matched to any detection.")
+    return matches

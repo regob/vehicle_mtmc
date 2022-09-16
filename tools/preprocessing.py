@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torchvision
 import torchvision.transforms as T
 
 
@@ -64,12 +65,16 @@ def extract_image_patch(image, bbox, patch_shape=None):
     return image
 
 
-
 def create_extractor(extractor_class, batch_size=32, image_shape=(224, 224), **kwargs):
     image_encoder = extractor_class(**kwargs)
     img_transform = T.Compose([T.ToTensor(), T.Normalize(
         [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-    patch_transform = T.Resize(image_shape, interpolation=3)
+    version = list(map(int, torchvision.__version__.split(".")[:2]))
+    if version[0] == 0 and version[1] < 13:
+        patch_transform = T.Resize(image_shape, interpolation=3)
+    else:
+        patch_transform = T.Resize(
+            image_shape, interpolation=T.InterpolationMode.BICUBIC)
 
     def encoder(image, boxes):
         if len(boxes) == 0:

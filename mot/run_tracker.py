@@ -21,7 +21,7 @@ from reid.vehicle_reid.load_model import load_model_from_opts
 from detection.detection import Detection
 from detection.load_detector import load_yolo
 
-from tools.util import FrameRateCounter
+from tools.util import FrameRateCounter, Benchmark, Timer
 from tools.preprocessing import create_extractor
 from tools import log
 from config.defaults import get_cfg_defaults
@@ -228,9 +228,14 @@ if cfg.MOT.SHOW:
 ########################################
 
 fps_counter = FrameRateCounter()
+benchmark = Benchmark()
+timer = Timer()
 
 for frame_num, frame in enumerate(video_in):
+    benchmark.restart_timer()
+    
     res = detector(frame).xywh[0].cpu().numpy()
+    benchmark.register_call("detector")
 
     # detected boxes in cx,cy,w,h format
     boxes = [t[:4] for t in res]
@@ -242,11 +247,13 @@ for frame_num, frame in enumerate(video_in):
 
     boxes_tlwh = [[int(x - w / 2), int(y - h / 2), w, h]
                   for x, y, w, h in boxes]
+    benchmark.register_call("detection filter")
 
     features = extractor(frame, boxes_tlwh)
     detections = [Detection(bbox, score, clname, feature)
                   for bbox, score, clname, feature in zip(boxes_tlwh, scores, classes, features)]
     features = torch.tensor(features)
+    benchmark.register_call("reid")
 
     boxs = np.array([d.tlwh for d in detections], dtype=int)
     scores = np.array([d.confidence for d in detections])
@@ -260,14 +267,18 @@ for frame_num, frame in enumerate(video_in):
     detections = [detections[i] for i in indices]
     features = features[indices]
 
+    benchmark.register_call("nonmax suppression")
+
     # get static attributes
     static_attribs = static_extractor(
         frame, boxs, features) if static_extractor else {}
     dynamic_attribs = dynamic_extractor(
         frame, boxs, features) if dynamic_extractor else {}
+    benchmark.register_call("attribute extraction")
 
     # update tracker
     tracker.update(frame_num, detections, static_attribs, dynamic_attribs)
+    benchmark.register_call("tracker")
 
     active_track_ids = list(tracker.active_track_ids)
     active_tracks = tracker.active_tracks
@@ -291,12 +302,17 @@ for frame_num, frame in enumerate(video_in):
         display.update(frame, active_track_ids,
                        active_track_bboxes_tlwh, all_attribs_list)
 
+    benchmark.register_call("displays")
+
     fps_counter.step()
     print("\rFrame: {}/{}, fps: {:.3f}".format(
         frame_num, video_frames, fps_counter.value()), end="")
 
 
-log.info(f"Tracking finished over {video_frames} frames, average fps: {fps_counter.value()}.")
+time_taken = f"{int(timer.elapsed() / 60)} min {int(timer.elapsed() % 60)} sec"
+avg_fps = video_frames / timer.elapsed()
+log.info(f"Tracking finished over {video_frames} frames, total time: {time_taken}, average fps: {avg_fps:.3f}.")
+log.info(f"\nMOT Benchmark (times in ms)\n{benchmark.get_benchmark()}")
 ########################################
 # Run postprocessing and save results
 ########################################

@@ -123,7 +123,7 @@ class ByteTrackerIOU(TrackerBase):
                  track_conf_thresh=0.5,
                  new_track_conf_thresh=0.4,
                  track_match_thresh=0.8,
-                 lost_track_keep_seconds=1,
+                 lost_track_keep_seconds=3,
                  zone_matcher: Union[ZoneMatcher, None] = None,
                  ):
         super().__init__(zone_matcher)
@@ -165,21 +165,3 @@ class ByteTrackerIOU(TrackerBase):
                 cx, cy) if self._zone_matcher else None
             track.update(frame_num, det.tlwh, det.confidence, det.feature, det.static_attributes,
                          det.dynamic_attributes, zone_id)
-
-
-def _match_detections_to_stracks(detections: List[Detection], stracks: List[STrack]):
-
-    def same(tlwh1, tlwh2):
-        return all(abs(a - b) <= 2 for a, b in zip(tlwh1, tlwh2))
-
-    matches = []
-    for strack in stracks:
-        for det in detections:
-            if same(strack.tlwh, det.tlwh):
-                matches.append((strack, det))
-                break
-        else:
-            pass
-            # print(strack.tlwh)
-            # raise ValueError("Strack not matched to any detection.")
-    return matches

@@ -33,9 +33,8 @@ class Tracklet:
         self.cam = None
         self.global_start, self.global_end = None, None
 
-    def __str__(self):
+    def __repr__(self):
         return f"Tracklet(track_id={self.track_id}, num_frames: {len(self.frames)}, num_features:{len(self.features)})"
-
     def __hash__(self):
         return hash(self.track_id)
 

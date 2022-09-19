@@ -56,11 +56,11 @@ isolated_mtmc_checks = {
 }
 
 express_checks = {
-    "CAMERAS": lambda x: _is(list)(x) and all(check_express_camera(y) for y in x),
+    "CAMERAS": lambda x: _is(list)(x) and all(_check_express_camera(y) for y in x),
 }
 
 
-def check_express_camera(d: dict):
+def _check_express_camera(d: dict):
     if "video" not in d:
         return False
     all_keys = ["video", "detection_mask", "zone_mask_dir", "valid_zonepaths"]

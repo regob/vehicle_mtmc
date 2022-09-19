@@ -31,6 +31,9 @@ def to_detections(tracklets):
         "bbox_height": [],
         "track_id": [],
     }
+    if len(tracklets) == 0:
+        return res
+    
     for k in tracklets[0].static_attributes:
         res[k] = []
     for k in tracklets[0].dynamic_attributes:
@@ -56,7 +59,7 @@ def to_detections(tracklets):
             res["zone"].extend(tracklet.zones)
 
     # all columns should have the same length
-    lengths = list(map(lambda col: len(col), res.values()))
+    lengths = list(map(len, res.values()))
     lengths_equal = list(map(lambda l: l == lengths[0], lengths))
     if not all(lengths_equal):
         for k, v in res.items():

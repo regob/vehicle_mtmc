@@ -1,3 +1,4 @@
+import sys
 import logging
 
 depth = 0
@@ -16,16 +17,15 @@ def log_init(log_file, level=logging.DEBUG, tee_stdout=True):
     global logger
     if isinstance(level, str):
         level = log_level_map[level.lower()]
-    logger = logging.getLogger("")
+    logger = logging.getLogger("MTMC")
     logger.setLevel(level)
+    logger.propagate = False
     formatter = logging.Formatter('%(levelname)-8s [%(asctime)s]: %(message)s')
     handler = logging.FileHandler(log_file)
-    # handler.setLevel(level)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     if tee_stdout:
-        handler = logging.StreamHandler()
-      #  handler.setLevel(level)
+        handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
@@ -42,7 +42,6 @@ def dec_depth():
 
 
 def debug(msg, *args):
-    print(logger)
     log_function(logger.debug, msg, *args)
 
 
@@ -61,4 +60,3 @@ def error(msg, *args):
 def log_function(log_func, msg, *args):
     msg = INDENT * depth + (msg % args)
     log_func(msg)
-    # logger.handlers[0].flush()

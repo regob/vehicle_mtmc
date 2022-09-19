@@ -197,6 +197,8 @@ def _get_track_candidates(current_track: MulticamTracklet, tracks: List[List[Tra
 
 def _get_tracks_start_between(tracks: List[Tracklet], min_start: int, max_start: int) -> List[Tracklet]:
     """Fetch tracks that start between given timestamps from a sorted list of tracks."""
+    if len(tracks) == 0:
+        return []
     i, j = 0, len(tracks) - 1
     while j - i > 1:
         mid = (i + j) >> 1

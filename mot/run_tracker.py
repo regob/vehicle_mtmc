@@ -1,6 +1,7 @@
 import os
 import sys
 import imageio
+import gc
 import torch
 import numpy as np
 from PIL import Image
@@ -78,6 +79,10 @@ def run_mot(cfg: CfgNode):
         os.makedirs(cfg.OUTPUT_DIR)
 
     VIDEO_NAME = os.path.split(cfg.MOT.VIDEO)[1].split(".")[0]
+
+    # free resources
+    gc.collect()
+    torch.cuda.empty_cache()
 
     ########################################
     # Loading models, initialization
@@ -272,9 +277,9 @@ def run_mot(cfg: CfgNode):
     time_taken = f"{int(timer.elapsed() / 60)} min {int(timer.elapsed() % 60)} sec"
     avg_fps = video_frames / timer.elapsed()
     log.info(
-        f"Tracking finished over {video_frames} frames, total time: {time_taken}, average fps: {avg_fps:.3f}.")
-    log.info(f"\nMOT Benchmark (times in ms)\n{benchmark.get_benchmark()}")
-    
+        f"\nTracking finished over {video_frames} frames, total time: {time_taken}, average fps: {avg_fps:.3f}.")
+    log.info(f"MOT Benchmark (times in ms)\n{benchmark.get_benchmark()}")
+
     ########################################
     # Run postprocessing and save results
     ########################################
@@ -294,7 +299,7 @@ def run_mot(cfg: CfgNode):
     for track in final_tracks:
         track.predict_final_static_attributes()
 
-    log.info("\nTracking done. #Tracklets: {}".format(len(final_tracks)))
+    log.info("Tracking done. #Tracklets: {}".format(len(final_tracks)))
     if cfg.MOT.REFINE:
         final_tracks = refine_tracklets(final_tracks, zone_matcher)[0]
         log.info("Refinement done. #Tracklets remain: {}".format(

@@ -8,7 +8,7 @@ def parse_args(description):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--config", help="config yaml file")
     parser.add_argument("--log_level", default="info", help="logging level")
-    parser.add_argument("--log_filename", default="mtmc_log.txt",
+    parser.add_argument("--log_filename", default="log.txt",
                         help="log file under output dir")
     parser.add_argument("--no_log_stdout", action="store_true",
                         help="do not log to stdout")

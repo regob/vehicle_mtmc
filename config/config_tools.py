@@ -33,5 +33,7 @@ def expand_relative_paths(root_cfg: CN):
     # expand paths in express config
     for it in c.EXPRESS.CAMERAS:
         for k, v in list(it.items()):
+            if k == "valid_zonepaths":
+                continue
             it[k] = get_abspath(v, root)
     return c

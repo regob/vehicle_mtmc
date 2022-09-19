@@ -1,14 +1,12 @@
 import os
 import sys
-import logging
 import argparse
 import imageio
 import torch
 import numpy as np
 from PIL import Image
 
-from mot.deep_sort import preprocessing, nn_matching
-from mot.tracklet import Tracklet
+from mot.deep_sort import preprocessing
 from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets
 from mot.tracker import DeepsortTracker, ByteTrackerIOU
 from mot.attributes import AttributeExtractorMixed
@@ -172,7 +170,7 @@ elif cfg.MOT.TRACKER == "bytetrack_iou":
     MIN_CONFID = 0.2
 else:
     raise ValueError("Tracker not implemented.")
-        
+
 # load detector
 detector = load_yolo(cfg.MOT.DETECTOR)
 detector.to(device)
@@ -193,7 +191,6 @@ if len(cfg.MOT.DYNAMIC_ATTRIBUTES) > 0:
                                                 device, cfg.MOT.ATTRIBUTE_INFER_BATCHSIZE)
 else:
     dynamic_extractor = None
-
 
 
 # load input mask if any
@@ -233,7 +230,7 @@ timer = Timer()
 
 for frame_num, frame in enumerate(video_in):
     benchmark.restart_timer()
-    
+
     res = detector(frame).xywh[0].cpu().numpy()
     benchmark.register_call("detector")
 
@@ -311,7 +308,8 @@ for frame_num, frame in enumerate(video_in):
 
 time_taken = f"{int(timer.elapsed() / 60)} min {int(timer.elapsed() % 60)} sec"
 avg_fps = video_frames / timer.elapsed()
-log.info(f"Tracking finished over {video_frames} frames, total time: {time_taken}, average fps: {avg_fps:.3f}.")
+log.info(
+    f"Tracking finished over {video_frames} frames, total time: {time_taken}, average fps: {avg_fps:.3f}.")
 log.info(f"\nMOT Benchmark (times in ms)\n{benchmark.get_benchmark()}")
 ########################################
 # Run postprocessing and save results

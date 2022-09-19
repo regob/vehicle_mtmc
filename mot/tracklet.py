@@ -8,7 +8,7 @@ class Tracklet:
 
     def __init__(self, track_id):
         self.features = []
-        self.mean_feature = None
+        self._mean_feature = None
         self.track_id = track_id
 
         # frame indices of the bounding boxes
@@ -37,6 +37,12 @@ class Tracklet:
         return f"Tracklet(track_id={self.track_id}, num_frames: {len(self.frames)}, num_features:{len(self.features)})"
     def __hash__(self):
         return hash(self.track_id)
+
+    @property
+    def mean_feature(self):
+        if self._mean_feature is None:
+            self.compute_mean_feature()
+        return self._mean_feature
 
     def update(self, frame_num, bbox, conf, feature=None, static_attributes=None, dynamic_attributes=None, zone_id=None):
         """Add a new detection to the track."""
@@ -69,19 +75,19 @@ class Tracklet:
         -------
         mean_feature: np.array
         """
-        self.mean_feature = np.zeros_like(self.features[0])
+        self._mean_feature = np.zeros_like(self.features[0])
         if method == "area_avg":
             div = min(map(lambda x: x[2] * x[3], self.bboxes))
         for i, f in enumerate(self.features):
             if method == "area_avg":
                 area = self.bboxes[i][2] * self.bboxes[i][3]
-                self.mean_feature += f * (area / div)
+                self._mean_feature += f * (area / div)
             else:
-                self.mean_feature += f
+                self._mean_feature += f
 
-        norm = np.linalg.norm(self.mean_feature)
-        self.mean_feature = self.mean_feature / norm
-        return self.mean_feature
+        norm = np.linalg.norm(self._mean_feature)
+        self._mean_feature = self._mean_feature / norm
+        return self._mean_feature
 
     def cluster_features(self, k):
         """Reduce the re-id features by K-means clustering."""

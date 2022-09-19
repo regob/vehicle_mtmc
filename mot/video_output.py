@@ -115,7 +115,7 @@ class FileVideo(Video):
     def __init__(self, font, save_path, fps, codec, format="FFMPEG", mode="I", fontsize=13):
         super().__init__(font, fontsize=fontsize)
         self.video = imageio.get_writer(save_path, format=format, mode=mode,
-                                        fps=fps, codec=codec)
+                                        fps=fps, codec=codec, macro_block_size=8)
 
     def update(self, frame, track_ids, bboxes, attributes):
         frame = self.render_tracks(frame, track_ids, bboxes, attributes)

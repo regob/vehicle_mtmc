@@ -121,7 +121,7 @@ class ByteTrackerIOU(TrackerBase):
     def __init__(self,
                  frame_rate=30,
                  track_conf_thresh=0.5,
-                 new_track_conf_thresh=0.4,
+                 new_track_conf_thresh=0.5,
                  track_match_thresh=0.8,
                  lost_track_keep_seconds=3,
                  zone_matcher: Union[ZoneMatcher, None] = None,

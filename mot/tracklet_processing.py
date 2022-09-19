@@ -72,7 +72,7 @@ def save_tracklets_csv(tracklets, path):
     df.to_csv(path, index=False)
 
 
-def split_tracklet(tracklet, frame_idx, new_track_id):
+def split_tracklet(tracklet: Tracklet, frame_idx: int, new_track_id: int) -> Tracklet:
     """ Split a tracklet into two parts at a given frame index.
     Parameters
     ----------
@@ -96,7 +96,7 @@ def split_tracklet(tracklet, frame_idx, new_track_id):
     track1.bboxes = tracklet.bboxes[:frame_idx]
     track1.zones = tracklet.zones[:frame_idx]
     track1.conf = tracklet.conf[:frame_idx]
-    track1.static_attributes = {k: v[:frame_idx]
+    track1.static_attributes = {k: v if isinstance(v, int) else v[:frame_idx]
                                 for k, v in tracklet.static_attributes.items()}
     track1.dynamic_attributes = {k: v[:frame_idx]
                                  for k, v in tracklet.dynamic_attributes.items()}
@@ -106,7 +106,7 @@ def split_tracklet(tracklet, frame_idx, new_track_id):
     track2.bboxes = tracklet.bboxes[frame_idx:]
     track2.zones = tracklet.zones[frame_idx:]
     track2.conf = tracklet.conf[frame_idx:]
-    track2.static_attributes = {k: v[frame_idx:]
+    track2.static_attributes = {k: v if isinstance(v, int) else v[frame_idx:]
                                 for k, v in tracklet.static_attributes.items()}
     track2.dynamic_attributes = {k: v[frame_idx:]
                                  for k, v in tracklet.dynamic_attributes.items()}
@@ -120,8 +120,10 @@ def join_tracklets(track1, track2):
     track1.bboxes.extend(track2.bboxes)
     track1.zones.extend(track2.zones)
     for feature in track1.static_attributes:
-        track1.static_attributes[feature].extend(
-            track2.static_attributes[feature])
+        attr = track1.static_attributes[feature]
+        if isinstance(attr, int):
+            continue
+        attr.extend(track2.static_attributes[feature])
     for feature in track1.dynamic_attributes:
         track1.dynamic_attributes[feature].extend(
             track2.dynamic_attributes[feature])

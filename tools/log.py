@@ -1,11 +1,8 @@
 import logging
 
 depth = 0
-log_level = logging.DEBUG
 INDENT = "  "
-inited = False
-output_tee_stdout = False
-logger = None
+logger = logging.getLogger()
 
 log_level_map = {
     "debug": logging.DEBUG,
@@ -16,18 +13,24 @@ log_level_map = {
 
 
 def log_init(log_file, level=logging.DEBUG, tee_stdout=True):
-    global inited, output_tee_stdout, log_level, logger
+    global logger
     if isinstance(level, str):
         level = log_level_map[level.lower()]
-    if inited:
-        return
-    inited = True
-    output_tee_stdout = tee_stdout
-    log_level = level
-    logging.basicConfig(filename=log_file, level=level)
-    logger = logging.getLogger()
+    logger = logging.getLogger("")
+    logger.setLevel(level)
+    formatter = logging.Formatter('%(levelname)-8s [%(asctime)s]: %(message)s')
+    handler = logging.FileHandler(log_file)
+    # handler.setLevel(level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    if tee_stdout:
+        handler = logging.StreamHandler()
+      #  handler.setLevel(level)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 
+    
 def inc_depth():
     global depth
     depth += 1
@@ -39,31 +42,23 @@ def dec_depth():
 
 
 def debug(msg, *args):
-    log_function(logging.debug, msg, *args)
+    print(logger)
+    log_function(logger.debug, msg, *args)
 
 
 def info(msg, *args):
-    log_function(logging.info, msg, *args)
+    log_function(logger.info, msg, *args)
 
 
 def warning(msg, *args):
-    log_function(logging.warning, msg, *args)
+    log_function(logger.warning, msg, *args)
 
 
 def error(msg, *args):
-    log_function(logging.error, msg, *args)
-
-
-_log_levels = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
-_log_funcs = [logging.debug, logging.info, logging.warning, logging.error]
+    log_function(logger.error, msg, *args)
 
 
 def log_function(log_func, msg, *args):
     msg = INDENT * depth + (msg % args)
-    if not inited:
-        print(msg)
-    else:
-        log_func(msg)
-        logger.handlers[0].flush()
-        if output_tee_stdout and _log_levels.index(log_level) <= _log_funcs.index(log_func):
-            print(msg)
+    log_func(msg)
+    # logger.handlers[0].flush()

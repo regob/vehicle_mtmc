@@ -1,6 +1,18 @@
 import time
+import argparse
 from collections import deque
 import numpy as np
+
+
+def parse_args(description):
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--config", help="config yaml file")
+    parser.add_argument("--log_level", default="info", help="logging level")
+    parser.add_argument("--log_filename", default="mtmc_log.txt",
+                        help="log file under output dir")
+    parser.add_argument("--no_log_stdout", action="store_true",
+                        help="do not log to stdout")
+    return parser.parse_args()
 
 
 class FrameRateCounter:
@@ -71,7 +83,7 @@ class Benchmark:
         lines = []
         for record in records:
             line = f"{record[0].ljust(mxwidth[0])} " + " ".join([x.center(w)
-                                                                  for x, w in zip(record[1:], mxwidth[1:])])
+                                                                 for x, w in zip(record[1:], mxwidth[1:])])
             lines.append(line)
         sepline = "-" * (sum(mxwidth) + 4)
         return "\n".join([lines[0], sepline] + lines[1:] + [sepline])

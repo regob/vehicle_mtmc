@@ -147,6 +147,5 @@ C.EXPRESS.CAMERAS = []
 
 def get_cfg_defaults():
     """Get a yacs config object with default values."""
-    # update relative paths to absolute ones
     return C.clone()
     

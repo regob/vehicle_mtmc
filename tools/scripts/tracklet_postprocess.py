@@ -31,7 +31,7 @@ cfg.freeze()
 tracklets = load_tracklets(args.tracklet_pkl)
 
 for tracklet in tracklets:
-    tracklet.predict_final_static_features()
+    tracklet.predict_final_static_attributes()
 
 
 if args.refine:

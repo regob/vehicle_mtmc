@@ -2,7 +2,6 @@ import os
 from typing import List, Dict, Union, Tuple
 from yacs.config import CfgNode as CN
 from tools import log
-from config.config_tools import get_abspath
 
 
 def _is(_type):

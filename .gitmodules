@@ -1,9 +1,6 @@
 [submodule "detection/yolov5"]
 	path = detection/yolov5
 	url = https://github.com/ultralytics/yolov5
-[submodule "VehicleX"]
-	path = VehicleX
-	url = ../VehicleX
 [submodule "reid/vehicle_reid"]
 	path = reid/vehicle_reid
 	url = ../vehicle_reid

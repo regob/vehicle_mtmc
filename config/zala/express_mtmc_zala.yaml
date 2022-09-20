@@ -18,6 +18,7 @@ MTMC:
   LINKAGE: 'average'
   MIN_SIM: 0.5
 EXPRESS:
+  FINAL_VIDEO_OUTPUT: false
   CAMERAS:
     - "video": "datasets/Zalaegerszeg/balaton.mp4"
       "detection_mask": "assets/balaton_mask.jpg"

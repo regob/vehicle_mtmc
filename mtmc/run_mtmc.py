@@ -9,6 +9,7 @@ from config.verify_config import check_mtmc_config, global_checks
 from config.config_tools import expand_relative_paths
 from mtmc.cameras import CameraLayout
 from mtmc.mtmc_matching import greedy_mtmc_matching
+from mtmc.output import save_tracklets_csv_per_cam, save_tracklets_per_cam
 from tools import log
 from tools.util import parse_args
 
@@ -59,6 +60,8 @@ def run_mtmc(cfg: CN):
         pickle.dump(multicam_tracks, f, pickle.HIGHEST_PROTOCOL)
     log.info("MTMC result (%s tracks) saved to: %s",
              len(multicam_tracks), mtmc_pickle_path)
+    return multicam_tracks
+
 
 if __name__ == "__main__":
     args = parse_args(
@@ -80,4 +83,13 @@ if __name__ == "__main__":
     log_path = os.path.join(cfg.OUTPUT_DIR, args.log_filename)
     log.log_init(log_path, args.log_level, not args.no_log_stdout)
 
-    run_mtmc(cfg)
+    mtracks = run_mtmc(cfg)
+
+    # save per camera results
+    pkl_paths = []
+    for i, pkl_path in enumerate(cfg.PICKLED_TRACKLETS):
+        mtmc_pkl_path = os.path.join(cfg.OUTPUT_DIR, f"{i}_{os.path.split(pkl_path)[1]}")
+        pkl_paths.append(mtmc_pkl_path)
+    csv_paths = [pth.split(".")[0] + ".csv" for pth in pkl_paths]
+    save_tracklets_per_cam(mtracks, pkl_paths)
+    save_tracklets_csv_per_cam(mtracks, csv_paths)

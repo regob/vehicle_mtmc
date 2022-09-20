@@ -23,13 +23,16 @@ C.SYSTEM.ROOT_DIR = str(Path(__file__).parent.parent)
 C.SYSTEM.GPU_IDS = [0]
 
 ################################################################################
-# Global output config
+# Global config
 ################################################################################
 
 # Path to the directory in which all outputs will be saved into
 # it makes sense to provide a new directory under output, e.g output/run_1
 # (to be overridden)
 C.OUTPUT_DIR = None
+
+# do only a debug run (only track the first few frames in MOT, and express runs)
+C.DEBUG_RUN = False
 
 ################################################################################
 # MOT (single camera tracking) config
@@ -144,6 +147,8 @@ C.EXPRESS = CN()
 #   - 'valid_zonepaths': see MOT.VALID_ZONEPATHS (optional)
 C.EXPRESS.CAMERAS = []
 
+# Save videos with final MTMC-matched ids for each camera
+C.EXPRESS.FINAL_VIDEO_OUTPUT = False
 
 def get_cfg_defaults():
     """Get a yacs config object with default values."""

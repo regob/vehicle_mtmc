@@ -18,6 +18,7 @@ system_checks = {
 
 global_checks = {
     "OUTPUT_DIR": lambda x: os.path.isdir(x) or os.path.isdir(os.path.dirname(os.path.normpath(x))),
+    "DEBUG_RUN": _is(bool),
 }
 
 common_mot_checks = {
@@ -52,11 +53,12 @@ common_mtmc_checks = {
 }
 
 isolated_mtmc_checks = {
-    "PICKLED_TRACKLETS": lambda x: _is(list)(x),
+    "PICKLED_TRACKLETS": _is(list),
 }
 
 express_checks = {
     "CAMERAS": lambda x: _is(list)(x) and all(_check_express_camera(y) for y in x),
+    "FINAL_VIDEO_OUTPUT": _is(bool),
 }
 
 

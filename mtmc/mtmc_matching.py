@@ -160,14 +160,10 @@ def greedy_mtmc_matching(tracks: List[List[Tracklet]], cams: CameraLayout, min_s
     valid_mtracks = [multicam_tracks[idx] for idx in range(
         len(multicam_tracks)) if track_dsu.find_root(idx) == idx]
 
-    # reindex final tracks
+    # reindex final tracks and finalize them
     for i, mtrack in enumerate(valid_mtracks):
         mtrack.id = i
-
-    # also assign the new id's to the single-cam tracks
-    for mtrack in valid_mtracks:
-        for track in mtrack.tracks:
-            track.track_id = mtrack.id
+        mtrack.finalize()
 
     log_total_time = round(time.time() - log_start_time, 3)
     log.info(
@@ -228,27 +224,3 @@ def _get_tracks_start_between(tracks: List[Tracklet], min_start: int, max_start:
         end = j + 1
 
     return tracks[start:end]
-
-
-if __name__ == "__main__":
-    cams = CameraLayout("../config/zala/mtmc_camera_layout.txt")
-    import pickle
-
-    def load(pth):
-        f = open(pth, "rb")
-        res = pickle.load(f)
-        f.close()
-        return res
-    cam_tracks = [
-        load("../output/balaton/zala_balaton_results.pkl"),
-        load("../output/gasparich/gasparich_results.pkl"),
-        load("../output/kormend/kormend_results.pkl"),
-        load("../output/bevasarlokozpont/bevasarlokozpont_results.pkl"),
-    ]
-    for tracks in cam_tracks:
-        for track in tracks:
-            track.compute_mean_feature()
-    print(f"Total tracks: {sum(len(tr) for tr in cam_tracks)}")
-
-    res = greedy_mtmc_matching(cam_tracks, cams, linkage="single")
-    print(len(res))

@@ -57,6 +57,7 @@ class MulticamTracklet:
                 self._cams |= 1 << track.cam
         return self._cams
 
+    @property
     def inverse_cams(self):
         """Bitmap of cams not occuring in this tracklet if there are n_cams in total."""
         bmp = (1 << self._n_cams) - 1
@@ -69,6 +70,23 @@ class MulticamTracklet:
         if self._cams is not None:
             for track in other.tracks:
                 self._cams |= 1 << track.cam
+
+    def finalize(self):
+        """Finalize single cam tracks contained in this mtrack (assign the same id to them)."""
+        for track in self._tracks:
+            track.track_id = self.id
+        # TODO: make static attributes the same?
+
+
+def get_tracks_by_cams(multicam_tracks: List[MulticamTracklet]) -> List[List[Tracklet]]:
+    """Return multicam tracklets sorted by cameras."""
+    if len(multicam_tracks) == 0:
+        return []
+    tracks_per_cam = [[] for _ in range(multicam_tracks[0].n_cams)]
+    for mtrack in multicam_tracks:
+        for track in mtrack.tracks:
+            tracks_per_cam[track.cam].append(track)
+    return tracks_per_cam
 
 
 def have_mutual_cams(mtrack1: MulticamTracklet, mtrack2: MulticamTracklet) -> bool:

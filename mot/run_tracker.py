@@ -198,6 +198,9 @@ def run_mot(cfg: CfgNode):
     timer = Timer()
 
     for frame_num, frame in enumerate(video_in):
+        if cfg.DEBUG_RUN and frame_num >= 100:
+            break
+            
         benchmark.restart_timer()
 
         res = detector(frame).xywh[0].cpu().numpy()

@@ -5,6 +5,7 @@ from yacs.config import CfgNode
 
 from mot.run_tracker import run_mot
 from mtmc.run_mtmc import run_mtmc
+from mtmc.output import save_tracklets_per_cam, save_tracklets_csv_per_cam, annotate_video_mtmc
 from config.defaults import get_cfg_defaults
 from config.config_tools import expand_relative_paths
 from config.verify_config import check_express_config, global_checks, check_mot_config
@@ -43,6 +44,8 @@ def run_express_mtmc(cfg: CfgNode):
     for mot_conf in mot_configs:
         run_mot(mot_conf)
 
+    log.info("Express: Running MOT on all cameras finished. Running MTMC...")
+
     # run MTMC
     pickle_paths = [os.path.join(path, f"{cam_name}.pkl")
                     for path, cam_name in zip(cam_dirs, cam_names)]
@@ -50,7 +53,21 @@ def run_express_mtmc(cfg: CfgNode):
     mtmc_cfg.defrost()
     mtmc_cfg.MTMC.PICKLED_TRACKLETS = pickle_paths
     mtmc_cfg.freeze()
-    run_mtmc(mtmc_cfg)
+    mtracks = run_mtmc(mtmc_cfg)
+
+    log.info("Express: Running MTMC on all cameras finished. Saving final results ...")
+
+    # save single cam tracks
+    final_pickle_paths = [path.split(".")[0] + "_mtmc.pkl" for path in pickle_paths]
+    final_csv_paths = [path.split(".")[0] + "_mtmc.csv" for path in pickle_paths]
+    save_tracklets_per_cam(mtracks, final_pickle_paths)
+    save_tracklets_csv_per_cam(mtracks, final_csv_paths)
+
+    if cfg.EXPRESS.FINAL_VIDEO_OUTPUT:
+        for i, pkl_path in enumerate(pickle_paths):
+            video_in = mot_configs[i].MOT.VIDEO
+            video_out = pkl_path.split(".")[0] + "_mtmc.mp4"
+            annotate_video_mtmc(video_in, video_out, mtracks, i)
 
 
 if __name__ == "__main__":

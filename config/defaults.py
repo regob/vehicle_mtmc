@@ -81,7 +81,7 @@ C.MOT.ONLINE_VIDEO_OUTPUT = False
 C.MOT.VIDEO_OUTPUT = False
 
 # font for text subscriptions (id labels, etc.)
-C.MOT.FONT = "Hack-Regular.ttf"
+C.MOT.FONT = "assets/Hack-Regular.ttf"
 
 # minimum number of bounding boxes per track
 C.MOT.MIN_FRAMES = 10

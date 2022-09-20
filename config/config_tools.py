@@ -12,6 +12,7 @@ def expand_relative_paths(root_cfg: CN):
     c = root_cfg
     root = c.SYSTEM.ROOT_DIR
     c.OUTPUT_DIR = get_abspath(c.OUTPUT_DIR, root)
+    c.FONT = get_abspath(c.FONT, root)
     c.MOT.VIDEO = get_abspath(c.MOT.VIDEO, root)
     c.MOT.REID_MODEL_CKPT = get_abspath(c.MOT.REID_MODEL_CKPT, root)
     c.MOT.REID_MODEL_OPTS = get_abspath(c.MOT.REID_MODEL_OPTS, root)
@@ -25,7 +26,6 @@ def expand_relative_paths(root_cfg: CN):
         for k, v in x.items():
             x[k] = get_abspath(v, root)
     c.MOT.ZONE_MASK_DIR = get_abspath(c.MOT.ZONE_MASK_DIR, root)
-    c.MOT.FONT = get_abspath(c.MOT.FONT, root)
 
     c.MTMC.CAMERA_LAYOUT = get_abspath(c.MTMC.CAMERA_LAYOUT, root)
     for i, x in enumerate(c.MTMC.PICKLED_TRACKLETS):

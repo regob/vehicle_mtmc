@@ -34,6 +34,12 @@ C.OUTPUT_DIR = None
 # do only a debug run (only track the first few frames in MOT, and express runs)
 C.DEBUG_RUN = False
 
+# font for text subscriptions (id labels, etc.)
+C.FONT = "assets/Hack-Regular.ttf"
+
+# font size for text subscriptions
+C.FONTSIZE = 18
+
 ################################################################################
 # MOT (single camera tracking) config
 ################################################################################
@@ -79,9 +85,6 @@ C.MOT.ONLINE_VIDEO_OUTPUT = False
 
 # save final video output (with tracklet refinement)
 C.MOT.VIDEO_OUTPUT = False
-
-# font for text subscriptions (id labels, etc.)
-C.MOT.FONT = "assets/Hack-Regular.ttf"
 
 # minimum number of bounding boxes per track
 C.MOT.MIN_FRAMES = 10

@@ -179,15 +179,16 @@ def run_mot(cfg: CfgNode):
 
     # initialize output video
     if cfg.MOT.ONLINE_VIDEO_OUTPUT:
-        video_out = FileVideo(cfg.MOT.FONT,
+        video_out = FileVideo(cfg.FONT,
                               os.path.join(cfg.OUTPUT_DIR,
                                            f"{VIDEO_NAME}_online.mp4"),
                               format='FFMPEG', mode='I', fps=video_meta["fps"],
-                              codec=video_meta["codec"])
+                              codec=video_meta["codec"],
+                              fontsize=cfg.FONTSIZE)
 
     # initialize display
     if cfg.MOT.SHOW:
-        display = DisplayVideo(cfg.MOT.FONT)
+        display = DisplayVideo(cfg.FONT)
 
     ########################################
     # Main tracking loop
@@ -313,7 +314,7 @@ def run_mot(cfg: CfgNode):
                                       os.path.join(cfg.OUTPUT_DIR,
                                                    f"{VIDEO_NAME}.mp4"),
                                       final_tracks,
-                                      cfg.MOT.FONT)
+                                      cfg.FONT, cfg.FONTSIZE)
 
     csv_save_path = os.path.join(cfg.OUTPUT_DIR, f"{VIDEO_NAME}.csv")
     save_tracklets_csv(final_tracks, csv_save_path)

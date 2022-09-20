@@ -68,7 +68,7 @@ def run_express_mtmc(cfg: CfgNode):
             video_in = mot_configs[i].MOT.VIDEO
             video_ext = video_in.split(".")[1]
             video_out = pkl_path.split(".")[0] + f"_mtmc.{video_ext}"
-            annotate_video_mtmc(video_in, video_out, mtracks, i, font=cfg.MOT.FONT)
+            annotate_video_mtmc(video_in, video_out, mtracks, i, font=cfg.FONT, fontsize=cfg.FONTSIZE)
 
 
 if __name__ == "__main__":

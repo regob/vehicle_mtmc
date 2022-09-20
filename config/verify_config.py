@@ -19,6 +19,8 @@ system_checks = {
 global_checks = {
     "OUTPUT_DIR": lambda x: os.path.isdir(x) or os.path.isdir(os.path.dirname(os.path.normpath(x))),
     "DEBUG_RUN": _is(bool),
+    "FONT": lambda x: _is(str)(x) and os.path.exists(x),
+    "FONTSIZE": _is(int),
 }
 
 common_mot_checks = {
@@ -31,7 +33,6 @@ common_mot_checks = {
     "SHOW": _is(bool),
     "ONLINE_VIDEO_OUTPUT": _is(bool),
     "VIDEO_OUTPUT": _is(bool),
-    "FONT": _is(str),
     "MIN_FRAMES": lambda x: _is(int)(x) and x >= 1,
     "STATIC_ATTRIBUTES": lambda x: _is(list)(x) and all(os.path.exists(y) for z in x for y in z.values()),
     "DYNAMIC_ATTRIBUTES": lambda x: _is(list)(x) and all(os.path.exists(y) for z in x for y in z.values()),

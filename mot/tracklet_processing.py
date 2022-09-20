@@ -44,10 +44,10 @@ def to_detections(tracklets):
     for tracklet in tracklets:
         res["frame"].extend(tracklet.frames)
         for x, y, w, h in tracklet.bboxes:
-            res["bbox_topleft_x"].append(x)
-            res["bbox_topleft_y"].append(y)
-            res["bbox_width"].append(w)
-            res["bbox_height"].append(h)
+            res["bbox_topleft_x"].append(int(x))
+            res["bbox_topleft_y"].append(int(y))
+            res["bbox_width"].append(int(round(w)))
+            res["bbox_height"].append(int(round(h)))
         res["track_id"].extend([tracklet.track_id] * len(tracklet.frames))
         for static_f, val in tracklet.static_attributes.items():
             values = val if isinstance(val, list) else [

@@ -66,7 +66,8 @@ def run_express_mtmc(cfg: CfgNode):
     if cfg.EXPRESS.FINAL_VIDEO_OUTPUT:
         for i, pkl_path in enumerate(pickle_paths):
             video_in = mot_configs[i].MOT.VIDEO
-            video_out = pkl_path.split(".")[0] + "_mtmc.mp4"
+            video_ext = video_in.split(".")[1]
+            video_out = pkl_path.split(".")[0] + f"_mtmc.{video_ext}"
             annotate_video_mtmc(video_in, video_out, mtracks, i)
 
 

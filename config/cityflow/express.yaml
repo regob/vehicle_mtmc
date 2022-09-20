@@ -1,0 +1,32 @@
+OUTPUT_DIR: "output/cityflow_s02"
+DEBUG_RUN: false
+MOT:
+ REID_MODEL_OPTS: "reid/vehicle_reid/model/new_resnet_verzal_ce/opts.yaml"
+ REID_MODEL_CKPT: "reid/vehicle_reid/model/new_resnet_verzal_ce/net_19.pth"
+ REID_FP16: false
+ REID_BATCHSIZE: 1
+ DETECTOR: "yolov5x6"
+ TRACKER: "bytetrack_iou"
+ SHOW: false
+ VIDEO_OUTPUT: false
+ STATIC_ATTRIBUTES:
+   - color: "models/color_net_verzal.pth"
+   - type: "models/type_net_verzal_2.pth"
+ ATTRIBUTE_INFER_BATCHSIZE: 1
+ REFINE: false
+MTMC:
+  CAMERA_LAYOUT: 'config/cityflow/mtmc_camera_layout.txt'
+  LINKAGE: 'average'
+  MIN_SIM: 0.5
+EXPRESS:
+  FINAL_VIDEO_OUTPUT: true
+  CAMERAS:
+    - "video": "datasets/cityflow_track3/validation/S02/c006/vdo.avi"
+      "detection_mask": "assets/cityflow/c006_mask.jpg"
+    - "video": "datasets/cityflow_track3/validation/S02/c007/vdo.avi"
+      "detection_mask": "assets/cityflow/c007_mask.jpg"
+    - "video": "datasets/cityflow_track3/validation/S02/c008/vdo.avi"
+      "detection_mask": "assets/cityflow/c008_mask.jpg"
+    - "video": "datasets/cityflow_track3/validation/S02/c009/vdo.avi"
+      "detection_mask": "assets/cityflow/c009_mask.jpg"
+    

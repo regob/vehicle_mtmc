@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(
     description="Extract frames (or bounding boxes in frames) from a video as images.")
 parser.add_argument("video", help="video file to extract frames from")
 parser.add_argument(
-    "save_path", help="""Directory to save images in.""")
+    "save_dir", help="""Directory to save images in.""")
 parser.add_argument("--frame_num", type=int, default=-1,
                     help="Index of a single frame to extract (from 0). if not provided, all frames are extracted.")
 parser.add_argument("--annot_csv", default=None,
@@ -32,7 +32,7 @@ args = parser.parse_args()
 cfg = get_cfg_defaults()
 cfg.freeze()
 
-save_dir = args.save_path
+save_dir = args.save_dir
 
 if not os.path.isdir(save_dir):
     if os.path.isfile(save_dir):
@@ -71,7 +71,7 @@ for frame_num, frame in tqdm.tqdm(enumerate(video), total=video.count_frames()):
 
     if df is None or args.save_frames_too:
         imageio.imsave(os.path.join(
-            args.save_path, f"frame_{frame_num}.jpg"), frame)
+            args.save_dir, f"frame_{frame_num}.jpg"), frame)
 
     if df is None:
         continue
@@ -84,12 +84,12 @@ for frame_num, frame in tqdm.tqdm(enumerate(video), total=video.count_frames()):
         if args.resize > 0:
             img = Image.fromarray(img)
             img = img.resize((args.resize, args.resize))
-        imageio.imsave(os.path.join(args.save_path, f"{row['track_id']}_frame_{frame_num}_{video_name}.jpg"),
+        imageio.imsave(os.path.join(args.save_dir, f"{row['track_id']}_frame_{frame_num}_{video_name}.jpg"),
                        img)
 
 
 if args.annot_output_csv is not None:
-    path_prefix = os.path.relpath(os.path.realpath(args.save_path),
+    path_prefix = os.path.relpath(os.path.realpath(args.save_dir),
                                   start=os.path.join(os.path.realpath(cfg.SYSTEM.ROOT_DIR),
                                                      "datasets"))
 

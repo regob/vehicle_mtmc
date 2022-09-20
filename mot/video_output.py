@@ -12,6 +12,7 @@ except ImportError as e:
 
 from mot.attributes import get_attribute_value
 from mot.tracklet_processing import load_tracklets
+from tools import log
 
 
 def draw_rectangle(img_np, tx, ty, w, h, color, width):
@@ -69,7 +70,12 @@ class Video:
     def __init__(self, font, fontsize=13):
         cmap = plt.get_cmap('hsv')
         self.colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
-        self.font = ImageFont.truetype(font, fontsize)
+        try:
+            self.font = ImageFont.truetype(font, fontsize)
+        except OSError:
+            log.error(f"Video: Font {font} cannot be loaded, using PIL default font.")
+            self.font = ImageFont.load_default()
+        log.error(f"Seems like Font {font} cannot be opened
         self.frame_font = ImageFont.truetype(font, 18)
         self.frame_num = 0
 

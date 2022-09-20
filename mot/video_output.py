@@ -75,7 +75,7 @@ class Video:
         except OSError:
             log.error(f"Video: Font {font} cannot be loaded, using PIL default font.")
             self.font = ImageFont.load_default()
-        log.error(f"Seems like Font {font} cannot be opened
+        log.error(f"Seems like Font {font} cannot be opened.")
         self.frame_font = ImageFont.truetype(font, 18)
         self.frame_num = 0
 

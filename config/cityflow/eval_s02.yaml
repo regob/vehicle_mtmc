@@ -1,0 +1,15 @@
+OUTPUT_DIR: "output/cityflow_s02_city"
+EVAL:
+  MIN_IOU: 0.5
+  IGNORE_FP: false
+  DROP_SINGLE_CAM: true
+  GROUND_TRUTHS:
+    - "datasets/cityflow_track3/validation/S02/c006/gt/gt.txt"
+    - "datasets/cityflow_track3/validation/S02/c007/gt/gt.txt"
+    - "datasets/cityflow_track3/validation/S02/c008/gt/gt.txt"
+    - "datasets/cityflow_track3/validation/S02/c009/gt/gt.txt"
+  PREDICTIONS:
+    - "output/cityflow_s02_city/0_vdo/vdo_mtmc.txt"
+    - "output/cityflow_s02_city/1_vdo/vdo_mtmc.txt"
+    - "output/cityflow_s02_city/2_vdo/vdo_mtmc.txt"
+    - "output/cityflow_s02_city/3_vdo/vdo_mtmc.txt"

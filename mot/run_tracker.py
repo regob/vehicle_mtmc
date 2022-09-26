@@ -8,7 +8,7 @@ from PIL import Image
 from yacs.config import CfgNode
 
 from mot.deep_sort import preprocessing
-from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets
+from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets, save_tracklets_txt
 from mot.tracker import DeepsortTracker, ByteTrackerIOU
 from mot.attributes import AttributeExtractorMixed
 from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_tracklets
@@ -27,6 +27,7 @@ from config.defaults import get_cfg_defaults
 from config.config_tools import expand_relative_paths
 from config.verify_config import check_mot_config, global_checks
 
+MOT_OUTPUT_NAME = "mot"
 
 def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None):
     """Filter the detected boxes by confidence scores, classes and location.
@@ -73,12 +74,10 @@ def run_mot(cfg: CfgNode):
 
     # check and verify config (has to be done after logging init to see errors)
     if not check_mot_config(cfg):
-        sys.exit(2)
+        return None
 
     if not os.path.exists(cfg.OUTPUT_DIR):
         os.makedirs(cfg.OUTPUT_DIR)
-
-    VIDEO_NAME = os.path.split(cfg.MOT.VIDEO)[1].split(".")[0]
 
     # free resources
     gc.collect()
@@ -103,7 +102,7 @@ def run_mot(cfg: CfgNode):
         if gpu_id >= torch.cuda.device_count():
             log.error(
                 f"Gpu id {gpu_id} is higher than the number of cuda GPUs available ({torch.cuda.device_count()}).")
-            sys.exit(3)
+            return None
         device = torch.device(f"cuda:{gpu_id}")
 
     # initialize reid model
@@ -181,7 +180,7 @@ def run_mot(cfg: CfgNode):
     if cfg.MOT.ONLINE_VIDEO_OUTPUT:
         video_out = FileVideo(cfg.FONT,
                               os.path.join(cfg.OUTPUT_DIR,
-                                           f"{VIDEO_NAME}_online.mp4"),
+                                           f"{MOT_OUTPUT_NAME}_online.mp4"),
                               format='FFMPEG', mode='I', fps=video_meta["fps"],
                               codec=video_meta["codec"],
                               fontsize=cfg.FONTSIZE)
@@ -312,15 +311,19 @@ def run_mot(cfg: CfgNode):
     if cfg.MOT.VIDEO_OUTPUT:
         annotate_video_with_tracklets(cfg.MOT.VIDEO,
                                       os.path.join(cfg.OUTPUT_DIR,
-                                                   f"{VIDEO_NAME}.mp4"),
+                                                   f"{MOT_OUTPUT_NAME}.mp4"),
                                       final_tracks,
                                       cfg.FONT, cfg.FONTSIZE)
 
-    csv_save_path = os.path.join(cfg.OUTPUT_DIR, f"{VIDEO_NAME}.csv")
+    csv_save_path = os.path.join(cfg.OUTPUT_DIR, f"{MOT_OUTPUT_NAME}.csv")
     save_tracklets_csv(final_tracks, csv_save_path)
 
-    pkl_save_path = os.path.join(cfg.OUTPUT_DIR, f"{VIDEO_NAME}.pkl")
+    txt_save_path = os.path.join(cfg.OUTPUT_DIR, f"{MOT_OUTPUT_NAME}.txt")
+    save_tracklets_txt(final_tracks, txt_save_path)
+
+    pkl_save_path = os.path.join(cfg.OUTPUT_DIR, f"{MOT_OUTPUT_NAME}.pkl")
     save_tracklets(final_tracks, pkl_save_path)
+    return final_tracks
 
 
 if __name__ == "__main__":

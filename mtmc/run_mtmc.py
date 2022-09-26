@@ -9,10 +9,12 @@ from config.verify_config import check_mtmc_config, global_checks
 from config.config_tools import expand_relative_paths
 from mtmc.cameras import CameraLayout
 from mtmc.mtmc_matching import greedy_mtmc_matching
-from mtmc.output import save_tracklets_csv_per_cam, save_tracklets_per_cam
+from mtmc.output import save_tracklets_csv_per_cam, save_tracklets_per_cam, save_tracklets_txt_per_cam
 from tools import log
 from tools.util import parse_args
+from evaluate.run_evaluate import run_evaluation
 
+MTMC_TRACKLETS_NAME = "mtmc_tracklets"
 
 ########################################
 # Run MTMC
@@ -54,8 +56,9 @@ def run_mtmc(cfg: CN):
         for track in cam_tracks:
             track.compute_mean_feature()
 
-    multicam_tracks = greedy_mtmc_matching(tracks, cams, linkage="single")
-    mtmc_pickle_path = os.path.join(cfg.OUTPUT_DIR, "mtmc_tracklets.pkl")
+    multicam_tracks = greedy_mtmc_matching(tracks, cams, min_sim=cfg.MTMC.MIN_SIM,
+                                           linkage=cfg.MTMC.LINKAGE)
+    mtmc_pickle_path = os.path.join(cfg.OUTPUT_DIR, f"{MTMC_TRACKLETS_NAME}.pkl")
     with open(mtmc_pickle_path, "wb") as f:
         pickle.dump(multicam_tracks, f, pickle.HIGHEST_PROTOCOL)
     log.info("MTMC result (%s tracks) saved to: %s",
@@ -85,11 +88,36 @@ if __name__ == "__main__":
 
     mtracks = run_mtmc(cfg)
 
+    log.info("Saving per camera results ...")
+    
     # save per camera results
     pkl_paths = []
-    for i, pkl_path in enumerate(cfg.PICKLED_TRACKLETS):
+    for i, pkl_path in enumerate(cfg.MTMC.PICKLED_TRACKLETS):
         mtmc_pkl_path = os.path.join(cfg.OUTPUT_DIR, f"{i}_{os.path.split(pkl_path)[1]}")
         pkl_paths.append(mtmc_pkl_path)
     csv_paths = [pth.split(".")[0] + ".csv" for pth in pkl_paths]
+    txt_paths = [pth.split(".")[0] + ".txt" for pth in pkl_paths]
     save_tracklets_per_cam(mtracks, pkl_paths)
     save_tracklets_csv_per_cam(mtracks, csv_paths)
+    save_tracklets_txt_per_cam(mtracks, txt_paths)
+
+    log.info("Results saved.")
+
+    if len(cfg.EVAL.GROUND_TRUTHS) == 0:
+        sys.exit(0)
+        
+    log.info("Ground truth annotations are provided, trying to evaluate MTMC ...")
+
+    if len(cfg.EVAL.GROUND_TRUTHS) != len(cfg.MTMC.PICKLED_TRACKLETS):
+        log.error("Number of ground truth files != number of cameras, aborting ...")
+        sys.exit(1)
+
+    cfg.defrost()
+    cfg.EVAL.PREDICTIONS = txt_paths
+    cfg.freeze()
+    eval_res = run_evaluation(cfg)
+    if eval_res:
+        log.info("Evaluation successful.")
+    else:
+        log.error("Evaluation unsuccessful: probably EVAL config had some errors.")
+

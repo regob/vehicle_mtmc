@@ -3,20 +3,22 @@ import os
 
 from yacs.config import CfgNode
 
-from mot.run_tracker import run_mot
+from mot.run_tracker import run_mot, MOT_OUTPUT_NAME
 from mtmc.run_mtmc import run_mtmc
-from mtmc.output import save_tracklets_per_cam, save_tracklets_csv_per_cam, annotate_video_mtmc
+from mtmc.output import save_tracklets_per_cam, save_tracklets_csv_per_cam, save_tracklets_txt_per_cam, annotate_video_mtmc
 from config.defaults import get_cfg_defaults
 from config.config_tools import expand_relative_paths
 from config.verify_config import check_express_config, global_checks, check_mot_config
 from tools.util import parse_args
 from tools import log
 
+MTMC_OUTPUT_NAME = "mtmc"
+
 
 def run_express_mtmc(cfg: CfgNode):
     """Run Express MTMC on a given config."""
     if not check_express_config(cfg):
-        sys.exit(2)
+        return None
     mot_configs = []
     cam_names, cam_dirs = [], []
     for cam_idx, cam_info in enumerate(cfg.EXPRESS.CAMERAS):
@@ -38,7 +40,7 @@ def run_express_mtmc(cfg: CfgNode):
         if not check_mot_config(cam_cfg):
             log.error(
                 f"Error in the express config of camera {len(mot_configs) - 1}.")
-            sys.exit(2)
+            return None
 
     # run MOT in all cameras
     for mot_conf in mot_configs:
@@ -47,8 +49,7 @@ def run_express_mtmc(cfg: CfgNode):
     log.info("Express: Running MOT on all cameras finished. Running MTMC...")
 
     # run MTMC
-    pickle_paths = [os.path.join(path, f"{cam_name}.pkl")
-                    for path, cam_name in zip(cam_dirs, cam_names)]
+    pickle_paths = [os.path.join(path, f"{MOT_OUTPUT_NAME}.pkl") for path in cam_dirs]
     mtmc_cfg = cfg.clone()
     mtmc_cfg.defrost()
     mtmc_cfg.MTMC.PICKLED_TRACKLETS = pickle_paths
@@ -58,17 +59,20 @@ def run_express_mtmc(cfg: CfgNode):
     log.info("Express: Running MTMC on all cameras finished. Saving final results ...")
 
     # save single cam tracks
-    final_pickle_paths = [path.split(".")[0] + "_mtmc.pkl" for path in pickle_paths]
-    final_csv_paths = [path.split(".")[0] + "_mtmc.csv" for path in pickle_paths]
+    final_pickle_paths = [os.path.join(d, f"{MTMC_OUTPUT_NAME}.pkl") for d in cam_dirs]
+    final_csv_paths = [os.path.join(d, f"{MTMC_OUTPUT_NAME}.csv") for d in cam_dirs]
+    final_txt_paths = [os.path.join(d, f"{MTMC_OUTPUT_NAME}.txt") for d in cam_dirs]
     save_tracklets_per_cam(mtracks, final_pickle_paths)
+    save_tracklets_txt_per_cam(mtracks, final_txt_paths)
     save_tracklets_csv_per_cam(mtracks, final_csv_paths)
 
     if cfg.EXPRESS.FINAL_VIDEO_OUTPUT:
-        for i, pkl_path in enumerate(pickle_paths):
+        for i, cam_dir in enumerate(cam_dirs):
             video_in = mot_configs[i].MOT.VIDEO
             video_ext = video_in.split(".")[1]
-            video_out = pkl_path.split(".")[0] + f"_mtmc.{video_ext}"
+            video_out = os.path.join(cam_dir, f"{MTMC_OUTPUT_NAME}.{video_ext}")
             annotate_video_mtmc(video_in, video_out, mtracks, i, font=cfg.FONT, fontsize=cfg.FONTSIZE)
+    return mtracks
 
 
 if __name__ == "__main__":

@@ -2,8 +2,8 @@ OUTPUT_DIR: "output/cityflow_s02"
 DEBUG_RUN: false
 FONTSIZE: 24
 MOT:
- REID_MODEL_OPTS: "reid/vehicle_reid/model/new_resnet_verzal_ce/opts.yaml"
- REID_MODEL_CKPT: "reid/vehicle_reid/model/new_resnet_verzal_ce/net_19.pth"
+ REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet50_cityflow/opts.yaml"
+ REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet50_cityflow/net_15.pth"
  REID_FP16: false
  REID_BATCHSIZE: 1
  DETECTOR: "yolov5x6"

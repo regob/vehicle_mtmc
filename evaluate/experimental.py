@@ -1,44 +1,24 @@
-import numpy as np
-import argparse
-from pprint import pprint
-import motmetrics as mm
-
 from tools.metrics import iou
-from tools.conversion import load_motchallenge_format, load_csv_format
-
-
-def to_frame_list(detection_dict, total_frames=-1):
-    if total_frames < 0:
-        total_frames = max(detection_dict["frame"]) + 1
-    frames = [[] for _ in range(total_frames)]
-
-    for fr, tx, ty, w, h, id_ in zip(detection_dict["frame"],
-                                     detection_dict["bbox_topleft_x"],
-                                     detection_dict["bbox_topleft_y"],
-                                     detection_dict["bbox_width"],
-                                     detection_dict["bbox_height"],
-                                     detection_dict["track_id"]):
-        frames[fr].append((tx, ty, w, h, id_))
-    return frames
+from tools.conversion import to_frame_list
 
 
 def greedy_matching(gt_boxes, pred_boxes, min_iou=0.5):
-    dists = []
+    sims = []
     for i1, b1 in enumerate(gt_boxes):
         for i2, b2 in enumerate(pred_boxes):
             d = iou(b1[:4], b2[:4])
-            dists.append((d, i1, i2))
-    dists.sort(key=lambda x: x[0], reverse=True)
+            sims.append((d, i1, i2))
+    sims.sort(key=lambda x: x[0], reverse=True)
     matched = []
     gt_matched, pred_matched = set(), set()
-    for dist, i1, i2 in dists:
-        if dist < min_iou:
+    for sim, i1, i2 in sims:
+        if sim < min_iou:
             break
 
         if i1 in gt_matched or i2 in pred_matched:
             continue
 
-        matched.append((i1, i2, dist))
+        matched.append((i1, i2, sim))
         gt_matched.add(i1)
         pred_matched.add(i2)
     unmatched_gt = set(range(len(gt_boxes))).difference(gt_matched)
@@ -155,88 +135,3 @@ def eval_tracking(pred_detections, gt_detections, min_iou=0.5, ignore_fp=False):
         "fn": total_fn,
         "tp": total_tp,
     }
-
-
-def evaluate_mm(pred_detections, gt_detections, min_iou=0.5):
-    total_frames = max(
-        max(pred_detections["frame"]), max(gt_detections["frame"])) + 1
-    preds_by_frame = to_frame_list(pred_detections, total_frames)
-    gt_by_frame = to_frame_list(gt_detections, total_frames)
-
-    acc = mm.MOTAccumulator(auto_id=True)
-    for gt, preds in zip(gt_by_frame, preds_by_frame):
-        dists = []
-        for gt_det in gt:
-            dists.append([])
-            for pred_det in preds:
-                sim = iou(gt_det[:4], pred_det[:4])
-                if sim < min_iou:
-                    dists[-1].append(np.nan)
-                else:
-                    dists[-1].append(1 - sim)
-        gt_ids = [gt_det[4] for gt_det in gt]
-        pred_ids = [pred_det[4] for pred_det in preds]
-
-        acc.update(gt_ids, pred_ids, dists)
-
-    mh = mm.metrics.create()
-    summary_1 = mh.compute(
-        acc, metrics=mm.metrics.motchallenge_metrics, name="mot")
-
-    formatters = mh.formatters
-    formatters["motp"] = lambda motp: "{:.2%}".format(1 - motp)
-
-    strsummary = mm.io.render_summary(summary_1, formatters=formatters,
-                                      namemap=mm.io.motchallenge_metric_names)
-    return strsummary
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="evaluate tracking against a ground truth file in MOTChallenge format")
-    parser.add_argument("--gt", required=True,
-                        help="ground truth file in MOTChallenge csv format")
-    parser.add_argument("--pred", required=True,
-                        help="tracking results in csv")
-    parser.add_argument("--min_iou", type=float, default=0.5,
-                        help="minimal IOU for assigning a detection to a ground truth box")
-    parser.add_argument("--ignore_fp", action="store_true",
-                        help="""Set false positives to zero in all frames. This is needed if the ground truth
-                        does not include all possible objects (cars), e.g in the CityFlow dataset""")
-    parser.add_argument("--print_metric_names", action="store_true")
-    parser.add_argument("--own_solver", action="store_true",
-                        help="use implementation in this script instead of the motmetrics package, this supports the ignore_fp parameter")
-    args = parser.parse_args()
-
-    gt_dict = load_motchallenge_format(args.gt)
-    pred_dict = load_csv_format(args.pred)
-    if args.own_solver:
-        result = eval_tracking(
-            pred_dict, gt_dict, args.min_iou, args.ignore_fp)
-        pprint(result)
-    else:
-        result = evaluate_mm(pred_dict, gt_dict, args.min_iou)
-        print(result)
-
-    if args.print_metric_names:
-        metric_names = """
-        IDF1: IDF1 score
-        IDP: ID Precision
-        IDR: ID Recall
-        Rcll: Recall
-        Prcn: Precision
-        GT: num_unique (number of ground truth tracks)
-        MT: Mostly tracked (found in >=80%)
-        PT: Partially tracked (found in <80%, >=20%)
-        ML: Mostly lost (found in <20%)
-        FP: False positives
-        FN: False negatives
-        IDs: ID switches
-        FM: Fragmentations
-        MOTA: Mean Object Tracking Accuracy
-        MOTP: Mean Object Tracking Precision
-        IDt: num_transfer
-        IDa: num_acend
-        IDm: num_migrate
-        """
-        print(metric_names)

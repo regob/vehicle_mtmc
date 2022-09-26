@@ -153,7 +153,32 @@ C.EXPRESS.CAMERAS = []
 # Save videos with final MTMC-matched ids for each camera
 C.EXPRESS.FINAL_VIDEO_OUTPUT = False
 
+################################################################################
+# Evaluation config
+################################################################################
+
+C.EVAL = CN()
+
+# Ground truth annotations for the videos in the MOTChallenge format
+# In the case of MTMC this should contain a path per camera in order,
+# in MOT, there is only one path (still in a list)
+C.EVAL.GROUND_TRUTHS = []
+
+# Prediction files for each video in the MOTChallenge format
+# Only needed if evaluation is run separately, not as a part of MOT or MTMC
+C.EVAL.PREDICTIONS = []
+
+# minimal IOU similarity for matching predicted boxes with ground truth boxes
+C.EVAL.MIN_IOU = 0.5
+
+# Ignore false positive detections in evaluation. If the ground truth does not contain
+# annotation for all frames and all relevant objects, this is needed.
+C.EVAL.IGNORE_FP = False
+
+# Drop tracks that only appear on a single camera (only in MTMC if there are more cameras)
+C.EVAL.DROP_SINGLE_CAM = False
+
+
 def get_cfg_defaults():
     """Get a yacs config object with default values."""
     return C.clone()
-    

@@ -4,6 +4,7 @@ import logging
 depth = 0
 INDENT = "  "
 logger = logging.getLogger()
+num_errors = 0
 
 log_level_map = {
     "debug": logging.DEBUG,
@@ -54,9 +55,14 @@ def warning(msg, *args):
 
 
 def error(msg, *args):
+    global num_errors
+    num_errors += 1
     log_function(logger.error, msg, *args)
 
 
 def log_function(log_func, msg, *args):
-    msg = INDENT * depth + (msg % args)
+    if len(args) > 0:
+        msg = INDENT * depth + (msg % args)
+    else:
+        msg = INDENT * depth + msg
     log_func(msg)

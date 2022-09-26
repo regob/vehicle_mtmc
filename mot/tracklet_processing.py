@@ -70,11 +70,25 @@ def to_detections(tracklets):
 
 
 def save_tracklets_csv(tracklets, path):
+    """Save tracklets as detections in a csv format (with attributes and zones)"""
     res = to_detections(tracklets)
     df = pd.DataFrame(res)
     df.to_csv(path, index=False)
+    
 
-
+def save_tracklets_txt(tracklets, path):
+    """Save tracklets as detections in the MOTChallenge format"""
+    res = to_detections(tracklets)
+    res["frame"] = list(map(lambda x: x + 1, res["frame"]))
+    df = pd.DataFrame(res)
+    df = df[["frame", "track_id", "bbox_topleft_x", "bbox_topleft_y", "bbox_width", "bbox_height"]]
+    df["conf"] = 1
+    df["x"] = -1
+    df["y"] = -1
+    df["z"] = -1
+    df.to_csv(path, index=False, header=False)
+             
+    
 def split_tracklet(tracklet: Tracklet, frame_idx: int, new_track_id: int) -> Tracklet:
     """ Split a tracklet into two parts at a given frame index.
     Parameters

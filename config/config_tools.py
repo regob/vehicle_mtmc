@@ -37,4 +37,8 @@ def expand_relative_paths(root_cfg: CN):
             if k == "valid_zonepaths":
                 continue
             it[k] = get_abspath(v, root)
+
+    # expand paths in evaluation config
+    c.EVAL.GROUND_TRUTHS = list(map(lambda x: get_abspath(x, root), c.EVAL.GROUND_TRUTHS))
+    c.EVAL.PREDICTIONS = list(map(lambda x: get_abspath(x, root), c.EVAL.PREDICTIONS))
     return c

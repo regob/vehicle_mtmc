@@ -62,6 +62,14 @@ express_checks = {
     "FINAL_VIDEO_OUTPUT": _is(bool),
 }
 
+evaluation_checks = {
+    "GROUND_TRUTHS": lambda x: all(os.path.exists(y) for y in x),
+    "PREDICTIONS": lambda x: all(os.path.exists(y) for y in x),
+    "MIN_IOU": lambda x: _is(float)(x) and x <= 1.0,
+    "IGNORE_FP": _is(bool),
+    "DROP_SINGLE_CAM": _is(bool),
+}
+
 
 def _check_express_camera(d: dict):
     if "video" not in d:
@@ -84,6 +92,7 @@ def run_checks(checks: dict, cfg: CN):
             log.error(f"Config check failed: {check_name}.")
     return not failed
 
+
 def run_list_of_checks(checks: List[Tuple[Union[Dict, CN]]]):
     success = all(run_checks(check, cfg) for check, cfg in checks)
     if success:
@@ -91,8 +100,7 @@ def run_list_of_checks(checks: List[Tuple[Union[Dict, CN]]]):
     else:
         log.error("Config had errors. Aborting ...")
     return success
-        
-        
+
 
 def check_mot_config(cfg: CN):
     """Check a MOT config for errors."""
@@ -101,12 +109,14 @@ def check_mot_config(cfg: CN):
                                (isolated_mot_checks, cfg.MOT),
                                (common_mot_checks, cfg.MOT)])
 
+
 def check_mtmc_config(cfg: CN):
     """Check an MTMC config for errors."""
     return run_list_of_checks([(system_checks, cfg.SYSTEM),
                                (global_checks, cfg),
                                (isolated_mtmc_checks, cfg.MTMC),
                                (common_mtmc_checks, cfg.MTMC)])
+
 
 def check_express_config(cfg: CN):
     """Check an Express config for errors."""
@@ -115,3 +125,10 @@ def check_express_config(cfg: CN):
                                (common_mot_checks, cfg.MOT),
                                (common_mtmc_checks, cfg.MTMC),
                                (express_checks, cfg.EXPRESS)])
+
+
+def check_eval_config(cfg: CN):
+    """Check an evaluation config for errors."""
+    return run_list_of_checks([(system_checks, cfg.SYSTEM),
+                               (global_checks, cfg),
+                               (evaluation_checks, cfg.EVAL)])

@@ -1,5 +1,22 @@
+from typing import Union
 import pandas as pd
 from mot.tracklet import Tracklet
+
+
+def to_frame_list(detections: Union[pd.DataFrame, dict], total_frames=-1):
+    """Convert a dict or df describing detections to a list containing info frame-by-frame."""
+    if total_frames < 0:
+        total_frames = max(detections["frame"]) + 1
+    frames = [[] for _ in range(total_frames)]
+
+    for fr, tx, ty, w, h, id_ in zip(detections["frame"],
+                                     detections["bbox_topleft_x"],
+                                     detections["bbox_topleft_y"],
+                                     detections["bbox_width"],
+                                     detections["bbox_height"],
+                                     detections["track_id"]):
+        frames[fr].append((tx, ty, w, h, id_))
+    return frames
 
 
 def detection_dict_to_list(det_dict):
@@ -33,7 +50,6 @@ def detection_list_to_dict(det_list):
         res["bbox_width"].append(det[4])
         res["bbox_height"].append(det[5])
         res["conf"].append(det[6])
-
     return res
 
 
@@ -61,7 +77,6 @@ def detection_dict_to_tracklets(det_dict):
 
 def load_motchallenge_format(file_path, frame_offset=1):
     """Loads a MOTChallenge annotation txt, with frame_offset being the index of the first frame of the video"""
-
     res = []
     with open(file_path, "r") as f:
         lines = f.readlines()
@@ -80,3 +95,20 @@ def load_csv_format(file_path):
     df = pd.read_csv(file_path)
     res = {c: list(df[c]) for c in df.columns}
     return res
+
+
+def csv_files_to_cityflow(file_paths, cam_idxes, out_path=None):
+    dfs = []
+    for path, cam in zip(file_paths, cam_idxes):
+        df = pd.read_csv(path)
+        df["camera"] = cam
+        df = df[["camera", "track_id", "frame", "bbox_topleft_x",
+                 "bbox_topleft_y", "bbox_width", "bbox_height"]]
+        dfs.append(df)
+    df = pd.concat(dfs)
+    df["frame"] = list(map(lambda x: x + 1, df["frame"]))
+    df["xw"] = -1
+    df["yw"] = -1
+    if out_path:
+        df.to_csv(out_path, index=False, header=False, sep=" ")
+    return df

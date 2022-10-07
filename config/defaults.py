@@ -77,6 +77,11 @@ C.MOT.TRACKER = "deepsort"
 # in the image white pixels are included, while others (black ones) are excluded
 C.MOT.DETECTION_MASK = None
 
+# camera calibration file containing
+# Homography matrix: a1 a2 a3; b1 b2 b3; c1 c2 c3
+# in the first line
+C.MOT.CALIBRATION = None
+
 # show video output stream for tracking (cv2 library NEEDED)
 C.MOT.SHOW = True
 
@@ -148,6 +153,7 @@ C.EXPRESS = CN()
 #   - 'detection_mask': see MOT.DETECTION_MASK (optional)
 #   - 'zone_mask_dir': see MOT.ZONE_MASK_DIR (optional)
 #   - 'valid_zonepaths': see MOT.VALID_ZONEPATHS (optional)
+#   - 'calibration': see MOT.CALIBRATION (optional)
 C.EXPRESS.CAMERAS = []
 
 # Save videos with final MTMC-matched ids for each camera

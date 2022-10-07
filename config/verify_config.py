@@ -45,6 +45,7 @@ isolated_mot_checks = {
     "DETECTION_MASK": lambda x: x is None or os.path.isfile(x),
     "VALID_ZONEPATHS": lambda x: _is(list)(x) and all(_is(str)(y) for y in x),
     "ZONE_MASK_DIR": lambda x: x is None or os.path.isdir(x),
+    "CALIBRATION": lambda x: x is None or os.path.isfile(x),
 }
 
 common_mtmc_checks = {
@@ -74,7 +75,7 @@ evaluation_checks = {
 def _check_express_camera(d: dict):
     if "video" not in d:
         return False
-    all_keys = ["video", "detection_mask", "zone_mask_dir", "valid_zonepaths"]
+    all_keys = ["video", "detection_mask", "zone_mask_dir", "valid_zonepaths", "calibration"]
     for k, v in d.items():
         if k not in all_keys:
             return False

@@ -13,6 +13,7 @@ from mot.tracker import DeepsortTracker, ByteTrackerIOU
 from mot.attributes import AttributeExtractorMixed
 from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_tracklets
 from mot.zones import ZoneMatcher
+from mot.projection_3d import Projector, average_speed
 
 from reid.feature_extractor import FeatureExtractor
 from reid.vehicle_reid.load_model import load_model_from_opts
@@ -95,6 +96,9 @@ def run_mot(cfg: CfgNode):
     # non max suppression param
     nms_max_overlap = 0.85
 
+    # other params
+    SPEED_WINDOW_SIZE = 5
+
     if len(cfg.SYSTEM.GPU_IDS) == 0:
         device = torch.device("cpu")
     else:
@@ -122,6 +126,7 @@ def run_mot(cfg: CfgNode):
     video_w, video_h = video_meta["size"]
     video_frames = video_in.count_frames()
     video_fps = video_meta["fps"]
+    VIDEO_EXT = cfg.MOT.VIDEO.split(".")[-1]
 
     # initialize zone matching
     if cfg.MOT.ZONE_MASK_DIR and cfg.MOT.VALID_ZONEPATHS:
@@ -129,6 +134,9 @@ def run_mot(cfg: CfgNode):
             cfg.MOT.ZONE_MASK_DIR, cfg.MOT.VALID_ZONEPATHS)
     else:
         zone_matcher = None
+
+    # initialize 3d projector
+    projector = Projector(cfg.MOT.CALIBRATION) if cfg.MOT.CALIBRATION else None
 
     # initialize tracker
     if cfg.MOT.TRACKER == "deepsort":
@@ -180,7 +188,7 @@ def run_mot(cfg: CfgNode):
     if cfg.MOT.ONLINE_VIDEO_OUTPUT:
         video_out = FileVideo(cfg.FONT,
                               os.path.join(cfg.OUTPUT_DIR,
-                                           f"{MOT_OUTPUT_NAME}_online.mp4"),
+                                           f"{MOT_OUTPUT_NAME}_online.{VIDEO_EXT}"),
                               format='FFMPEG', mode='I', fps=video_meta["fps"],
                               codec=video_meta["codec"],
                               fontsize=cfg.FONTSIZE)
@@ -238,11 +246,12 @@ def run_mot(cfg: CfgNode):
 
         benchmark.register_call("nonmax suppression")
 
-        # get static attributes
+        # get attributes
         static_attribs = static_extractor(
             frame, boxs, features) if static_extractor else {}
         dynamic_attribs = dynamic_extractor(
             frame, boxs, features) if dynamic_extractor else {}
+
         benchmark.register_call("attribute extraction")
 
         # update tracker
@@ -252,6 +261,17 @@ def run_mot(cfg: CfgNode):
         active_track_ids = list(tracker.active_track_ids)
         active_tracks = tracker.active_tracks
         active_track_bboxes_tlwh = [tr.bboxes[-1] for tr in active_tracks]
+
+        # calculate speed if possible
+        if projector:
+            for track in active_tracks:
+                last_coords = track.bboxes[-SPEED_WINDOW_SIZE:]
+                last_coords = [(round(x[0] + x[2] / 2), x[1] + x[3]) for x in last_coords]
+                last_coords = [projector.project3d(x, y) for x, y in last_coords]
+                first_frame = track.frames[max(0, len(track.frames) - SPEED_WINDOW_SIZE)]
+                last_frame = track.frames[-1]
+                speed = average_speed(last_coords, last_frame - first_frame, video_fps)
+                track.dynamic_attributes.setdefault("speed", []).append(int(speed))
 
         all_attribs_list = [{} for _ in range(len(active_track_ids))]
         for i, track in enumerate(active_tracks):
@@ -311,7 +331,7 @@ def run_mot(cfg: CfgNode):
     if cfg.MOT.VIDEO_OUTPUT:
         annotate_video_with_tracklets(cfg.MOT.VIDEO,
                                       os.path.join(cfg.OUTPUT_DIR,
-                                                   f"{MOT_OUTPUT_NAME}.mp4"),
+                                                   f"{MOT_OUTPUT_NAME}.{VIDEO_EXT}"),
                                       final_tracks,
                                       cfg.FONT, cfg.FONTSIZE)
 

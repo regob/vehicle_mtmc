@@ -2,8 +2,8 @@ OUTPUT_DIR: "output/cityflow_s02"
 DEBUG_RUN: false
 FONTSIZE: 24
 MOT:
- REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet50_cityflow/opts.yaml"
- REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet50_cityflow/net_15.pth"
+ REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet101_2048/opts.yaml"
+ REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet101_2048/net_31.pth"
  REID_FP16: false
  REID_BATCHSIZE: 1
  DETECTOR: "yolov5x6"
@@ -12,8 +12,8 @@ MOT:
  SHOW: false
  VIDEO_OUTPUT: false
  STATIC_ATTRIBUTES:
-   - color: "models/color_net_verzal.pth"
-   - type: "models/type_net_verzal_2.pth"
+   - color: "models/color_resnet101_2048.pth"
+   - type: "models/type_resnet101_2048.pth"
  ATTRIBUTE_INFER_BATCHSIZE: 1
  REFINE: false
 MTMC:
@@ -25,10 +25,15 @@ EXPRESS:
   CAMERAS:
     - "video": "datasets/cityflow_track3/validation/S02/c006/vdo.avi"
       "detection_mask": "assets/cityflow/c006_mask.jpg"
+      "calibration": "datasets/cityflow_track3/validation/S02/c006/calibration.txt"
     - "video": "datasets/cityflow_track3/validation/S02/c007/vdo.avi"
       "detection_mask": "assets/cityflow/c007_mask.jpg"
+      "calibration": "datasets/cityflow_track3/validation/S02/c007/calibration.txt"
     - "video": "datasets/cityflow_track3/validation/S02/c008/vdo.avi"
       "detection_mask": "assets/cityflow/c008_mask.jpg"
+      "calibration": "datasets/cityflow_track3/validation/S02/c008/calibration.txt"
     - "video": "datasets/cityflow_track3/validation/S02/c009/vdo.avi"
       "detection_mask": "assets/cityflow/c009_mask.jpg"
+      "calibration": "datasets/cityflow_track3/validation/S02/c009/calibration.txt"
+
     

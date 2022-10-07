@@ -171,7 +171,7 @@ def annotate_video_with_tracklets(input_path, output_path, tracklets, font="Hack
                     else:
                         attr[k] = v[ptr]
                 for k, v in track.dynamic_attributes.items():
-                    attr[k] = v
+                    attr[k] = v[ptr]
                 attribs.append(attr)
 
                 if ptr >= len(track.frames) - 1:

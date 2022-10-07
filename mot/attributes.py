@@ -18,12 +18,14 @@ DYNAMIC_ATTRIBUTES = {
 }
 
 
-def get_attribute_value(name: str, idx: int):
+def get_attribute_value(name: str, value: int):
     """Get the description of an attribute, e.g. get_attribute_value('color', 5) -> 'blue'."""
+    if name == "speed":
+        return str(value)
     if name in STATIC_ATTRIBUTES:
-        return STATIC_ATTRIBUTES[name][idx]
+        return STATIC_ATTRIBUTES[name][value]
     if name in DYNAMIC_ATTRIBUTES:
-        return DYNAMIC_ATTRIBUTES[name][idx]
+        return DYNAMIC_ATTRIBUTES[name][value]
     err = f"Invalid static or dynamic attribute name: {name}."
     raise ValueError(err)
 

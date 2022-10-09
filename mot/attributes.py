@@ -113,6 +113,8 @@ class AttributeExtractorMixed:
             for k, v in self.reid_extractor(X_reid, batch_size=self.batch_size).items():
                 result[k] = v
         if self.cnn_extractor is not None:
-            for k, v in self.cnn_extractor(frame, bboxes).items():
-                result[k] = v
+            res = self.cnn_extractor(frame, bboxes)
+            if res:
+                for k, v in res.items():
+                    result[k] = v
         return result

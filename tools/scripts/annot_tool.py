@@ -11,12 +11,12 @@ import argparse
 import pickle
 
 from mot.tracklet_processing import load_tracklets
-from mot.static_features import FEATURES
+from mot.attributes import STATIC_ATTRIBUTES
 from tools.preprocessing import extract_image_patch
 
 parser = argparse.ArgumentParser(description="Reid annotation tool")
-parser.add_argument("--max_per_class", type=int, default=20,
-                    help="maximum number of images to associate with each id/class.")
+parser.add_argument("--max_imgs_per_track", type=int, default=20,
+                    help="maximum number of images per track to show.")
 parser.add_argument("--video", help="path to input video", required=True)
 parser.add_argument("--tracklets", required=True,
                     help="tracklets pickle file")
@@ -57,7 +57,7 @@ class TrackedVideo:
 
         # make sure a single value is predicted for static features
         for tracklet in self.tracklets:
-            tracklet.predict_final_static_features()
+            tracklet.predict_final_static_attributes()
 
     def step_frame(self):
         try:
@@ -169,7 +169,7 @@ class Annotator:
                                 "bbox_height", "track_id"]
                     x, y, w, h = tracklet.bboxes[i]
                     vals = [tracklet.frames[i], x, y, w, h, track_id]
-                    for f, val in tracklet.static_features.items():
+                    for f, val in tracklet.static_attributes.items():
                         colnames.append(f)
                         vals.append(val)
                     if tracklet.zones:
@@ -228,13 +228,13 @@ class TrackAnnotatorDialog:
         self.track_id_input.grid(row=0, column=1, padx=3)
 
         self.feature_inputs = {}
-        for i, (feature, value) in enumerate(tracklet.static_features.items()):
+        for i, (feature, value) in enumerate(tracklet.static_attributes.items()):
             ttk.Label(self.input_frame, text=feature + ":").grid(
                 row=0, column=2 + 2 * i)
             feature_var = tk.StringVar(self.top)
-            feature_var.set(FEATURES[feature][value])
+            feature_var.set(STATIC_ATTRIBUTES[feature][value])
             feature_choice = ttk.Combobox(
-                self.input_frame, textvariable=feature_var, values=FEATURES[feature], state="readonly")
+                self.input_frame, textvariable=feature_var, values=STATIC_ATTRIBUTES[feature], state="readonly")
             feature_choice.grid(row=0, column=3 + 2 * i, padx=3)
             self.feature_inputs[feature] = feature_var
 
@@ -311,8 +311,8 @@ class TrackAnnotatorDialog:
 
     def _choose_ref_track(self, track):
         self.set_id_input(str(track.save_track_id))
-        for f, val in track.static_features.items():
-            self.feature_inputs[f].set(FEATURES[f][val])
+        for f, val in track.static_attributes.items():
+            self.feature_inputs[f].set(STATIC_ATTRIBUTES[f][val])
 
     def set_id_input(self, text):
         self.track_id_input.delete(0, "end")
@@ -357,7 +357,8 @@ class TrackAnnotatorDialog:
             self.current_idxes) if self.img_labels[i].selected]
         self.tracklet.save_track_id = int(self.track_id_input.get())
         for f, val in self.feature_inputs.items():
-            self.tracklet.static_features[f] = FEATURES[f].index(val.get())
+            self.tracklet.static_attributes[f] = STATIC_ATTRIBUTES[f].index(
+                val.get())
         self.top.destroy()
 
     def cancel(self):
@@ -367,7 +368,7 @@ class TrackAnnotatorDialog:
 class Main:
     def __init__(self, video_path, tracklets_path, start_frame=0, reference_tracks=None,
                  ref_time_ahead=0.0, ref_matching_zone=-1, ref_max_time_gap=6.0, ref_video_fps=None,
-                 unique_id_start=10000):
+                 unique_id_start=10000, max_imgs_per_track=20):
         self.video_path = video_path
         self.start_frame = start_frame
         self.tracklets_path = tracklets_path
@@ -377,11 +378,14 @@ class Main:
         self.ref_max_time_gap = ref_max_time_gap
         self.ref_video_fps = ref_video_fps
         self.next_unique_id = unique_id_start
+        self.max_imgs_per_track = max_imgs_per_track
         self.root = tk.Tk()
         try:
-            self.root.tk.call("source", "~/.themes/azure/azure.tcl")
-            self.root.tk.call("set_theme", "light")
+            #self.root.tk.call("source", "~/.themes/azure/azure.tcl")
+            #self.root.tk.call("set_theme", "dark")
+            pass
         except:
+            print("Setting azure theme failed.")
             pass
         # self.style = ttk.Style()
         # self.style.theme_use("breeze")
@@ -433,6 +437,7 @@ class Main:
 
         # initialize video and annotation
         self.init_annotation()
+        self.last_ended_track = None
 
         # add keybinds
         self.root.bind("<space>", lambda _: self.step_until_new_tracklet())
@@ -444,8 +449,9 @@ class Main:
 
     def init_annotation(self):
         self.video = TrackedVideo(
-            self.video_path, self.tracklets_path, self.start_frame)
-        static_features = list(self.video.tracklets[0].static_features.keys())
+            self.video_path, self.tracklets_path, self.start_frame, "../../assets/Hack-Regular.ttf")
+        static_features = list(
+            self.video.tracklets[0].static_attributes.keys())
         zones = bool(self.video.tracklets[0].zones)
         self.annotator = Annotator(static_features, zones)
 
@@ -455,7 +461,7 @@ class Main:
             track_id = str(self.video.tracklets[idx].track_id)
             options.append(track_id)
         self.tracklet_options["values"] = options
-        self.tracklet_choice.set(options[0])
+        self.tracklet_choice.set(str(self.video.tracklets[self.last_ended_track].track_id))
 
     def update_frame_view(self):
         image = self.video.get_current_frame()
@@ -471,14 +477,20 @@ class Main:
             self.photo.image.paste(image)
 
     def step_until_new_tracklet(self):
-        last_ended_track = None if len(
-            self.video.ended_tracks) == 0 else self.video.ended_tracks[-1]
         step_valid = True
-        while step_valid and (len(self.video.ended_tracks) == 0 or
-                              last_ended_track == self.video.ended_tracks[-1]):
-            step_valid = self.video.step_frame()
+        if len(self.video.ended_tracks) == 0 or self.last_ended_track == self.video.ended_tracks[-1]:
+            while step_valid and (len(self.video.ended_tracks) == 0 or
+                                  self.last_ended_track == self.video.ended_tracks[-1]):
+                step_valid = self.video.step_frame()
+            self.update_frame_view()
 
-        self.update_frame_view()
+        try:
+            idx = self.video.ended_tracks.index(self.last_ended_track) + 1
+        except ValueError:
+            idx = 0
+        if idx < len(self.video.ended_tracks):
+            self.last_ended_track = self.video.ended_tracks[idx]
+        
         if step_valid:
             self.update_tracklet_options()
             return True
@@ -540,7 +552,7 @@ class Main:
             ref_tracks = None
 
         track_annot = TrackAnnotatorDialog(
-            self.root, tracklet, 40, ref_tracks, unique_id=self.next_unique_id)
+            self.root, tracklet, self.max_imgs_per_track, ref_tracks, unique_id=self.next_unique_id)
         self.root.wait_window(track_annot.top)
         if track_annot.accepted_idxes:
             self.annotator.add_annotations(
@@ -632,7 +644,12 @@ else:
     reference_tracks = None
     ref_video_fps = None
 
-main = Main(args.video, args.tracklets, start_frame=args.start_frame,
-            reference_tracks=reference_tracks, ref_time_ahead=args.ref_time_ahead,
-            ref_matching_zone=args.ref_matching_zone, ref_video_fps=ref_video_fps,
-            unique_id_start=args.unique_id_start)
+main = Main(args.video,
+            args.tracklets,
+            start_frame=args.start_frame,
+            reference_tracks=reference_tracks,
+            ref_time_ahead=args.ref_time_ahead,
+            ref_matching_zone=args.ref_matching_zone,
+            ref_video_fps=ref_video_fps,
+            unique_id_start=args.unique_id_start,
+            max_imgs_per_track=args.max_imgs_per_track)

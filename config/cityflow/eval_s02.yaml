@@ -1,4 +1,4 @@
-OUTPUT_DIR: "output/cityflow_s02_city"
+OUTPUT_DIR: "output/cityflow_s02"
 EVAL:
   MIN_IOU: 0.5
   IGNORE_FP: false
@@ -9,7 +9,7 @@ EVAL:
     - "datasets/cityflow_track3/validation/S02/c008/gt/gt.txt"
     - "datasets/cityflow_track3/validation/S02/c009/gt/gt.txt"
   PREDICTIONS:
-    - "output/cityflow_s02_city/0_vdo/vdo_mtmc.txt"
-    - "output/cityflow_s02_city/1_vdo/vdo_mtmc.txt"
-    - "output/cityflow_s02_city/2_vdo/vdo_mtmc.txt"
-    - "output/cityflow_s02_city/3_vdo/vdo_mtmc.txt"
+    - "output/cityflow_s02/0_vdo/vdo_mtmc.txt"
+    - "output/cityflow_s02/1_vdo/vdo_mtmc.txt"
+    - "output/cityflow_s02/2_vdo/vdo_mtmc.txt"
+    - "output/cityflow_s02/3_vdo/vdo_mtmc.txt"

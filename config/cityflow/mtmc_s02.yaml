@@ -2,10 +2,10 @@ OUTPUT_DIR: "output/cityflow_mtmc_eval"
 MTMC:
   CAMERA_LAYOUT: 'config/cityflow/mtmc_camera_layout.txt'
   PICKLED_TRACKLETS:
-    - "output/cityflow_s02_city/0_vdo/vdo.pkl"
-    - "output/cityflow_s02_city/1_vdo/vdo.pkl"
-    - "output/cityflow_s02_city/2_vdo/vdo.pkl"
-    - "output/cityflow_s02_city/3_vdo/vdo.pkl"
+    - "output/cityflow_s02/0_vdo/vdo.pkl"
+    - "output/cityflow_s02/1_vdo/vdo.pkl"
+    - "output/cityflow_s02/2_vdo/vdo.pkl"
+    - "output/cityflow_s02/3_vdo/vdo.pkl"
   LINKAGE: 'single'
   MIN_SIM: 0.52
 EVAL:

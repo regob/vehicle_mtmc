@@ -6,6 +6,7 @@ from yacs.config import CfgNode
 from mot.run_tracker import run_mot, MOT_OUTPUT_NAME
 from mtmc.run_mtmc import run_mtmc
 from mtmc.output import save_tracklets_per_cam, save_tracklets_csv_per_cam, save_tracklets_txt_per_cam, annotate_video_mtmc
+from evaluate.run_evaluate import run_evaluation
 from config.defaults import get_cfg_defaults
 from config.config_tools import expand_relative_paths
 from config.verify_config import check_express_config, global_checks, check_mot_config
@@ -72,6 +73,27 @@ def run_express_mtmc(cfg: CfgNode):
             video_ext = video_in.split(".")[1]
             video_out = os.path.join(cam_dir, f"{MTMC_OUTPUT_NAME}.{video_ext}")
             annotate_video_mtmc(video_in, video_out, mtracks, i, font=cfg.FONT, fontsize=cfg.FONTSIZE)
+            log.info(f"Express: video {i} saved.")
+
+    if len(cfg.EVAL.GROUND_TRUTHS) == 0:
+        log.info("Ground truths are not provided for evaluation, terminating.")
+        return mtracks
+        
+    log.info("Ground truth annotations are provided, trying to evaluate MTMC ...")
+    if len(cfg.EVAL.GROUND_TRUTHS) != len(cam_names):
+        log.error("Number of ground truth files != number of cameras, aborting evaluation ...")
+        return mtracks
+
+    mtmc_cfg.defrost()
+    mtmc_cfg.EVAL.PREDICTIONS = final_txt_paths
+    mtmc_cfg.freeze()
+    eval_res = run_evaluation(mtmc_cfg)
+    
+    if eval_res:
+        log.info("Evaluation successful.")
+    else:
+        log.error("Evaluation unsuccessful: probably EVAL config had some errors.")
+    
     return mtracks
 
 

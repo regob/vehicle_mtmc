@@ -18,9 +18,8 @@ MOT:
  REFINE: false
 MTMC:
   CAMERA_LAYOUT: 'config/cityflow/mtmc_camera_layout.txt'
-  LINKAGE: 'single'
-  MIN_SIM: 0.34
-  IGNORE_FP: true
+  LINKAGE: 'average'
+  MIN_SIM: 0.5
 EXPRESS:
   FINAL_VIDEO_OUTPUT: true
   CAMERAS:
@@ -36,5 +35,14 @@ EXPRESS:
     - "video": "datasets/cityflow_track3/validation/S02/c009/vdo.avi"
       "detection_mask": "assets/cityflow/c009_mask.jpg"
       "calibration": "datasets/cityflow_track3/validation/S02/c009/calibration.txt"
+EVAL:
+  MIN_IOU: 0.34
+  IGNORE_FP: true
+  DROP_SINGLE_CAM: false
+  GROUND_TRUTHS:
+    - "datasets/cityflow_track3/validation/S02/c006/gt/gt.txt"
+    - "datasets/cityflow_track3/validation/S02/c007/gt/gt.txt"
+    - "datasets/cityflow_track3/validation/S02/c008/gt/gt.txt"
+    - "datasets/cityflow_track3/validation/S02/c009/gt/gt.txt"
 
     

@@ -1,23 +1,27 @@
 OUTPUT_DIR: "output/zala_balaton"
+FONTSIZE: 18
+DEBUG_RUN: false
 MOT:
- VIDEO: "datasets/Zalaegerszeg/balaton.mp4"
- REID_MODEL_OPTS: "reid/vehicle_reid/model/new_resnet_verzal_ce/opts.yaml"
- REID_MODEL_CKPT: "reid/vehicle_reid/model/new_resnet_verzal_ce/net_19.pth"
- REID_FP16: false
- REID_BATCHSIZE: 1
- DETECTOR: "yolov5x6"
- DETECTION_MASK: "assets/balaton_mask.jpg"
- TRACKER: "bytetrack_iou"
- SHOW: false
- VIDEO_OUTPUT: false
- STATIC_ATTRIBUTES:
-   - color: "models/color_net_verzal.pth"
-   - type: "models/type_net_verzal_2.pth"
- ATTRIBUTE_INFER_BATCHSIZE: 1
- ZONE_MASK_DIR: "assets/zones/balaton/"
- VALID_ZONEPATHS:
-   - "^(1,)+(0(,0)*,)?2(,2)*$"
-   - "^(2,)+(0(,0)*,)?1(,1)*$"
-   - "^2(,2)*$"
- REFINE: false
+  VIDEO: "datasets/Zalaegerszeg/balaton.mp4"
+  REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet101_2048/opts.yaml"
+  REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet101_2048/net_31.pth"
+  CALIBRATION: "/mnt/stuff/school_shared/onlab2/Cal_PnP/data/balaton/calibration.txt"
+  REID_FP16: false
+  REID_BATCHSIZE: 1
+  DETECTOR: "yolov5x6"
+  DETECTION_MASK: "assets/balaton_mask.jpg"
+  TRACKER: "bytetrack_iou"
+  MIN_FRAMES: 5
+  SHOW: true
+  VIDEO_OUTPUT: true
+  STATIC_ATTRIBUTES:
+   - color: "models/color_resnet101_2048.pth"
+   - type: "models/type_resnet101_2048.pth"
+  ATTRIBUTE_INFER_BATCHSIZE: 1
+  ZONE_MASK_DIR: "assets/zones/balaton/"
+  VALID_ZONEPATHS:
+    - "^(1,)+(0(,0)*,)?2(,2)*$"
+    - "^(2,)+(0(,0)*,)?1(,1)*$"
+    - "^2(,2)*$"
+  REFINE: false
    

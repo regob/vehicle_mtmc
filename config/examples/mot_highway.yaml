@@ -1,8 +1,10 @@
 OUTPUT_DIR: "output/mot_highway"
+FONTSIZE: 10
 MOT:
  VIDEO: "datasets/highway.mp4"
  REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet101_2048/opts.yaml"
  REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet101_2048/net_31.pth"
+ CALIBRATION: "config/examples/highway_calibration.txt"
  REID_FP16: false
  REID_BATCHSIZE: 1
  DETECTOR: "yolov5x6"
@@ -12,7 +14,7 @@ MOT:
  VIDEO_OUTPUT: true
  STATIC_ATTRIBUTES:
    - color: "models/color_resnet101_2048.pth"
-   - type: "models/type_net_verzal_2.pth"
+   - type: "models/type_resnet50_mixstyle.pth"
  ATTRIBUTE_INFER_BATCHSIZE: 1
  ZONE_MASK_DIR: "assets/zones/highway/"
  VALID_ZONEPATHS:

@@ -38,7 +38,7 @@ C.DEBUG_RUN = False
 C.FONT = "assets/Hack-Regular.ttf"
 
 # font size for text subscriptions
-C.FONTSIZE = 18
+C.FONTSIZE = 11
 
 ################################################################################
 # MOT (single camera tracking) config

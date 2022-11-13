@@ -27,8 +27,23 @@ class Projector:
         return p[:2]
 
 
-def dist(latlon1, latlon2):
-    """Distance between two gps coordinates."""
+def dist(latlon1, latlon2) -> float:
+    """Distance between two gps coordinates.
+
+    Uses the Haversine formula (https://www.movable-type.co.uk/scripts/latlong.html)
+
+    Parameters:
+    ----------
+    latlon1: array_like[2]
+        Latitude-longitude of point 1.
+    latlon2: array_like[2]
+        Latitude-longitude of point 2.
+    
+    Returns:
+    -------
+    d: float
+        Distance between the two points in meters.
+    """
     R = 6371_000
     phi1 = latlon1[0] * math.pi / 180
     phi2 = latlon2[0] * math.pi / 180
@@ -38,28 +53,18 @@ def dist(latlon1, latlon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     d = R * c
     return d
+
+def dist_planar(latlon1, latlon2):
+    """Estimation of the distance between two points assuming planar earth."""
+    R = 6371_000
+    y1 = latlon1[0] * math.pi / 180
+    y2 = latlon2[0] * math.pi / 180
+    x1 = latlon1[1] * math.pi / 180
+    x2 = latlon2[1] * math.pi / 180
+
+    dy = abs(y1 - y2) * R
+    r_avg = R * math.cos((y1 + y2) / 2)
+    dx = abs(x1 - x2) * r_avg
+    return math.sqrt(dx ** 2 + dy ** 2)
     
-def average_speed(coords: list, total_frames: int, frame_rate: float):
-    if total_frames == 0:
-        return 0.0
-    dists = [dist(coords[i], coords[i+1]) for i in range(len(coords)-1)]
-    return sum(dists) * (frame_rate / total_frames) * 3.6
-
-def to_point(row):
-    x = round(row["bbox_topleft_x"] + row["bbox_width"] / 2)
-    y = row["bbox_topleft_y"] + row["bbox_height"]
-    return x, y
-
-if __name__ == "__main__":
-    proj = Projector("../datasets/cityflow_track3/validation/S02/c006/calibration.txt")
-    import pandas as pd
-    df = pd.read_csv("../output/cityflow_s02_city/0_vdo/vdo_mtmc.csv")
-    for track_id, ddf in df.groupby("track_id"):
-        p = []
-        first = ddf.iloc[0]["frame"]
-        last = ddf.iloc[len(ddf)-1]["frame"]
-        for i in range(len(ddf)):
-            x1, y1 = to_point(ddf.iloc[i])
-            p1 = proj.project3d(x1, y1)
-            p.append(p1)
-        print(f"Track {track_id} speed: {average_speed(p, last-first, 10)} km/h")
+    

@@ -15,28 +15,6 @@ from mot.tracklet_processing import load_tracklets
 from tools import log
 
 
-def draw_rectangle(img_np, tx, ty, w, h, color, width):
-    """ Draw a colored rectangle to a numpy image. The top left corner is at (x,y), the rect has
-    a width of w and a height of h. 'width' is the border width of the rectangle. """
-
-    color = np.array(color)
-
-    # bottom right coordinates
-    bx, by = int(tx + w), int(ty + h)
-
-    ranges = np.array([[int(ty - width), ty, int(tx - width), int(bx + width + 1)],
-                       [by + 1, int(by + width + 1),
-                        int(tx - width), int(bx + width + 1)],
-                       [int(ty - width), int(by + width + 1),
-                        int(tx - width), tx],
-                       [int(ty - width), int(by + width + 1), bx + 1, int(bx + width + 1)]], dtype=np.int)
-
-    ranges[np.where(ranges < 0)] = 0
-    for r in ranges:
-        img_np[r[0]:r[1], r[2]:r[3]] = color
-    return img_np
-
-
 def put_text(img_pil, text, x, y, color, font):
     draw = ImageDraw.Draw(img_pil)
     draw.text((x, y), text, (color[0], color[1], color[2],
@@ -47,7 +25,7 @@ def put_text(img_pil, text, x, y, color, font):
 def annotate(img_pil, id_label, attributes, tx, ty, bx, by, color, font):
     """ Put the id label and the features as text below or above of a bounding box. """
 
-    draw = ImageDraw.Draw(img_pil)
+    draw = ImageDraw.Draw(img_pil, "RGBA")
     draw.rectangle([tx, ty, bx, by], outline=color, width=2)
     text = [id_label] + [f"{k}: {get_attribute_value(k, v)}" for k,
                          v in attributes.items()]
@@ -60,16 +38,27 @@ def annotate(img_pil, id_label, attributes, tx, ty, bx, by, color, font):
         txt_y = ty - (textcoords[3] - textcoords[1]) - 4
     else:
         txt_y = by
+        
+    # draw rectangle in the background
+    coords = draw.multiline_textbbox((tx, txt_y), text, font=font)
+    # add some padding
+    textcoords = (coords[0] - 2, coords[1] - 2, coords[2] + 2, coords[3] + 2)
+    draw.rectangle(textcoords, fill=color)
 
-    draw.multiline_text(
-        (tx, txt_y), text, color, font=font)
+    # draw the text finally
+    draw.multiline_text((tx, txt_y), text, (0, 0, 0), font=font)
     return img_pil
 
 
 class Video:
     def __init__(self, font, fontsize=13):
-        cmap = plt.get_cmap('hsv')
-        self.colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
+        cmap = plt.get_cmap("Set2")
+        self.colors = [cmap(i)[:3] for i in range(cmap.N)]
+        cmap2 = plt.get_cmap("hsv")
+        for i in np.linspace(0.1, 0.5, 7):
+            self.colors.append(cmap2(i)[:3])
+        self.HASH_Q = int(1e9 + 7)
+        
         try:
             self.font = ImageFont.truetype(font, fontsize)
         except OSError:
@@ -80,17 +69,17 @@ class Video:
 
     def render_tracks(self, frame, track_ids, track_bboxes, attributes):
         overlay = Image.fromarray(
-            np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8))
+            np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8), "RGBA")
         for track_id, bbox, attrib in zip(track_ids, track_bboxes, attributes):
             tx, ty, w, h = bbox
             bx, by = int(tx + w), int(ty + h)
-            color = self.colors[int(track_id) % len(self.colors)]
+            color = self.colors[(self.HASH_Q * int(track_id)) % len(self.colors)]
             color = tuple(int(i * 255) for i in color)
 
             overlay = annotate(overlay, str(track_id), attrib,
                                tx, ty, bx, by, color, self.font)
 
-        mask = Image.fromarray((np.array(overlay) > 0).astype(np.uint8) * 255)
+        mask = Image.fromarray((np.array(overlay) > 0).astype(np.uint8) * 128)
         frame_img = Image.fromarray(frame)
         frame_img.paste(overlay, mask=mask)
 

@@ -35,6 +35,7 @@ class Tracklet:
 
     def __repr__(self):
         return f"Tracklet(track_id={self.track_id}, num_frames: {len(self.frames)}, num_features:{len(self.features)})"
+
     def __hash__(self):
         return hash(self.track_id)
 
@@ -119,6 +120,36 @@ class Tracklet:
             static_f[k] = int(preds.argmax())
         self.static_attributes = static_f
         return static_f
+
+    def finalize_speed(self, min_area=25 * 25, mean_mul=2.0, window_size=5):
+        """Refines per-frame speed values."""
+        if "speed" not in self.dynamic_attributes:
+            return
+        speeds = self.dynamic_attributes["speed"]
+        mean = sum(speeds) / len(speeds)
+
+        # set the first few bad measurements to the first reasonable one
+        for i in range(len(speeds)):
+            box = self.bboxes[i]
+            if box[2] * box[3] >= min_area and (mean_mul * mean >= speeds[i] >= mean / mean_mul):
+                speeds[:i] = [speeds[i]] * i
+                break
+        start = i
+
+        # set the last few bad measurements to the last reasonable one
+        for i in reversed(range(len(speeds))):
+            box = self.bboxes[i]
+            if box[2] * box[3] >= min_area and (mean_mul * mean >= speeds[i] >= mean / mean_mul):
+                speeds[i:] = [speeds[i]] * (len(speeds) - i)
+                break
+        end = i
+
+        # smoothen values with a sliding window
+        for i in range(start, end + 1):
+            l = max(0, i - window_size // 2)
+            r = min(len(speeds) - 1, i + window_size // 2)
+            speeds[i] = sum(speeds[l:r+1]) // (r - l + 1)
+            
 
     def zone_enter_leave_frames(self, zone_id):
         """Frame indices when the track entered and left a given zone."""

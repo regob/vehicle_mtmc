@@ -2,6 +2,7 @@ from typing import List, Union
 import torch
 import numpy as np
 
+from mot.projection_3d import Projector, dist, dist_planar
 from tools import log
 from tools.preprocessing import create_extractor
 
@@ -118,3 +119,21 @@ class AttributeExtractorMixed:
                 for k, v in res.items():
                     result[k] = v
         return result
+
+
+class SpeedEstimator:
+    def __init__(self, projector: Projector, frame_rate):
+        self.projector = projector
+        self.frame_rate = frame_rate
+        
+    def average_speed(self, coords: list, total_frames: int, max_dist_ratio=2.0):
+        """Average speed of an object over multiple frames."""
+        if len(coords) < 2 or total_frames == 0:
+            return 0.0
+        coords = [self.projector.project3d(x, y) for x, y in coords]
+        total_dist = dist(coords[0], coords[-1])
+        dists = [dist_planar(coords[i], coords[i+1]) for i in range(len(coords)-1)]
+        partial_dist = sum(dists)
+        real_dist = partial_dist if partial_dist / total_dist <=  max_dist_ratio else total_dist
+        return real_dist * (self.frame_rate / total_frames)  * 3.6
+

@@ -147,13 +147,14 @@ def greedy_mtmc_matching(tracks: List[List[Tracklet]], cams: CameraLayout, min_s
 
         # insert new merge entries
         timestamp += 1
-        for cand in _get_track_candidates(mtrack1, tracks, cams):
-            mtrack3_idx = track_dsu.find_root(cand.dsu_idx)
-            mtrack3 = multicam_tracks[mtrack3_idx]
+        cands =  _get_track_candidates(mtrack1, tracks, cams)
+        cand_mtracks = set(track_dsu.find_root(c.dsu_idx) for c in cands)
+        for cand_idx in cand_mtracks:
+            mtrack3 = multicam_tracks[cand_idx]
             if have_mutual_cams(mtrack1, mtrack3):
                 continue
-
-            heapq.heappush(merge_queue, (-multicam_track_similarity(mtrack1, mtrack3, linkage), timestamp, mtrack1_idx, mtrack3_idx))
+            
+            heapq.heappush(merge_queue, (-multicam_track_similarity(mtrack1, mtrack3, linkage), timestamp, mtrack1_idx, cand_idx))
 
 
     # filter multicam tracks to keep only those that are valid (= it is a root of a set)

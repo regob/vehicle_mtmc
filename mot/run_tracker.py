@@ -10,10 +10,10 @@ from yacs.config import CfgNode
 from mot.deep_sort import preprocessing
 from mot.tracklet_processing import save_tracklets, save_tracklets_csv, refine_tracklets, save_tracklets_txt
 from mot.tracker import DeepsortTracker, ByteTrackerIOU
-from mot.attributes import AttributeExtractorMixed
 from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_tracklets
 from mot.zones import ZoneMatcher
-from mot.projection_3d import Projector, average_speed
+from mot.projection_3d import Projector
+from mot.attributes import AttributeExtractorMixed, SpeedEstimator
 
 from reid.feature_extractor import FeatureExtractor
 from reid.vehicle_reid.load_model import load_model_from_opts
@@ -69,6 +69,16 @@ def filter_boxes(boxes, scores, classes, good_classes, min_confid=0.5, mask=None
             final_boxes.append(bbox)
     return final_boxes
 
+def box_change_skewed(box, prev_box, skew_ratio=0.1, eps=1e-5):
+    """Check if one side of the bounding box has grown a lot more than the opposite one."""
+    left_diff = abs(box[0] - prev_box[0])
+    right_diff = abs(box[0] + box[2] - (prev_box[0] + prev_box[2]))
+    up_diff = abs(box[1] - prev_box[1])
+    down_diff = abs(box[1] + box[3] - (prev_box[1] + prev_box[3]))
+    lr = max(left_diff, 1) / max(right_diff, 1)
+    ud = max(up_diff, 1) / max(down_diff, 1)
+    return min(lr, ud) <= skew_ratio or max(lr, ud) >= 1 / skew_ratio
+
 
 def run_mot(cfg: CfgNode):
     """Run Multi-object tracking, defined by a config."""
@@ -95,9 +105,6 @@ def run_mot(cfg: CfgNode):
 
     # non max suppression param
     nms_max_overlap = 0.85
-
-    # other params
-    SPEED_WINDOW_SIZE = 5
 
     if len(cfg.SYSTEM.GPU_IDS) == 0:
         device = torch.device("cpu")
@@ -135,8 +142,10 @@ def run_mot(cfg: CfgNode):
     else:
         zone_matcher = None
 
-    # initialize 3d projector
+    # initialize 3d projector and speed estimator
+    SPEED_WINDOW_SIZE = max(7, round(video_fps / 2.5))
     projector = Projector(cfg.MOT.CALIBRATION) if cfg.MOT.CALIBRATION else None
+    speed_estimator = SpeedEstimator(projector, video_fps) if projector else None
 
     # initialize tracker
     if cfg.MOT.TRACKER == "deepsort":
@@ -262,15 +271,27 @@ def run_mot(cfg: CfgNode):
         active_tracks = tracker.active_tracks
         active_track_bboxes_tlwh = [tr.bboxes[-1] for tr in active_tracks]
 
-        # calculate speed if possible
-        if projector:
+        # estimate speed if possible
+        if speed_estimator:
             for track in active_tracks:
-                last_coords = track.bboxes[-SPEED_WINDOW_SIZE:]
+                # only keep bounding boxes that are not cut off
+                # because those result in inaccurate position approximations
+                last_coords = []
+                first_frame, last_frame = -1, -1
+                for i in range(len(track.bboxes)-1, -1, -1):
+                    if i == 0 or (not box_change_skewed(track.bboxes[i], track.bboxes[i-1])):
+                        last_coords.append(track.bboxes[i])
+                        first_frame = track.frames[i]
+                        if last_frame < 0:
+                            last_frame = first_frame
+                    if len(last_coords) == SPEED_WINDOW_SIZE:
+                        break
+                # last_coords = track.bboxes[-SPEED_WINDOW_SIZE:]
+                # first_frame = track.frames[len(track.frames) - len(last_coords)]
+                # last_frame = track.frames[-1]
+
                 last_coords = [(round(x[0] + x[2] / 2), x[1] + x[3]) for x in last_coords]
-                last_coords = [projector.project3d(x, y) for x, y in last_coords]
-                first_frame = track.frames[max(0, len(track.frames) - SPEED_WINDOW_SIZE)]
-                last_frame = track.frames[-1]
-                speed = average_speed(last_coords, last_frame - first_frame, video_fps)
+                speed = speed_estimator.average_speed(last_coords, last_frame - first_frame)
                 track.dynamic_attributes.setdefault("speed", []).append(int(speed))
 
         all_attribs_list = [{} for _ in range(len(active_track_ids))]
@@ -318,9 +339,10 @@ def run_mot(cfg: CfgNode):
     final_tracks = list(filter(lambda track: len(
         track.frames) >= cfg.MOT.MIN_FRAMES, final_tracks))
 
-    # finalize static attributes
+    # finalize static attributes and speed
     for track in final_tracks:
         track.predict_final_static_attributes()
+        track.finalize_speed()
 
     log.info("Tracking done. #Tracklets: {}".format(len(final_tracks)))
     if cfg.MOT.REFINE:

@@ -106,6 +106,8 @@ class AttributeExtractorMixed:
                 with open(path, "rb") as f:
                     model = pickle.load(f)
                 self.models_reid_generic[name] = model
+            else:
+                log.error(f"Attribute extractor format not supported: {path}. Use .pkl, .pth or .pt")
         self.reid_extractor = None if len(
             self.models_reid) == 0 else AttributeExtractor(self.models_reid)
         if len(self.models_img) == 0:
@@ -120,6 +122,14 @@ class AttributeExtractorMixed:
     def __call__(self, frame: np.ndarray, bboxes: List[Union[List, np.ndarray]], X_reid: torch.Tensor):
         """Computes attributes from image inputs and/or re-id feature inputs."""
         result = {}
+
+        # if no bounding boxes on the frame, return empty list for each attribute
+        if len(bboxes) == 0:
+            for attr in list(self.models_img.keys()) + list(self.models_reid.keys()) + \
+                list(self.models_reid_generic.keys()):
+                result[attr] = []
+            return result
+        
         # run prediction for generic models (sklearn) on reid embeddings
         for attr, model in self.models_reid_generic.items():
             result[attr] = list(model.predict(X_reid))

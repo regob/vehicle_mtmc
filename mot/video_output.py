@@ -26,7 +26,7 @@ def annotate(img_pil, id_label, attributes, tx, ty, bx, by, color, font):
     """ Put the id label and the features as text below or above of a bounding box. """
 
     draw = ImageDraw.Draw(img_pil, "RGBA")
-    draw.rectangle([tx, ty, bx, by], outline=color, width=2)
+    draw.rectangle([tx, ty, bx, by], outline=color, width=3)
     text = [id_label] + [f"{k}: {get_attribute_value(k, v)}" for k,
                          v in attributes.items()]
     text = "\n".join(text)
@@ -79,7 +79,7 @@ class Video:
             overlay = annotate(overlay, str(track_id), attrib,
                                tx, ty, bx, by, color, self.font)
 
-        mask = Image.fromarray((np.array(overlay) > 0).astype(np.uint8) * 128)
+        mask = Image.fromarray((np.array(overlay) > 0).astype(np.uint8) * 192)
         frame_img = Image.fromarray(frame)
         frame_img.paste(overlay, mask=mask)
 
@@ -110,6 +110,7 @@ class FileVideo(Video):
         super().__init__(font, fontsize=fontsize)
         self.video = imageio.get_writer(save_path, format=format, mode=mode,
                                         fps=fps, codec=codec, macro_block_size=8)
+
 
     def update(self, frame, track_ids, bboxes, attributes):
         frame = self.render_tracks(frame, track_ids, bboxes, attributes)

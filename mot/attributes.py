@@ -1,4 +1,5 @@
 from typing import List, Union
+import pickle
 import torch
 import numpy as np
 
@@ -56,13 +57,13 @@ class AttributeExtractor:
 
     def __call__(self, X: torch.Tensor, batch_size=1):
         """Computes attributes from image inputs or re-id feature inputs."""
-        out = self.run_extract(X, batch_size).cpu().numpy()
+        out = self._run_extract(X, batch_size).cpu().numpy()
         result = {}
         for attrib, idx in self.attribute_idx.items():
             result[attrib] = list(out[:, idx])
         return result
 
-    def run_extract(self, X, batch_size):
+    def _run_extract(self, X, batch_size):
         """Extract attributes from X using either CNN or FCNN models."""
         num_samples = X.shape[0]
         X = X.type(self.dtype)
@@ -84,19 +85,27 @@ class AttributeExtractorMixed:
     """Computes attributes using FCNN or/and CNN models."""
 
     def __init__(self, model_paths_by_attribute, fp16=False, device="cuda:0", batch_size=1):
+        # torch models that run on reid embeddings / those that run on images (CNN)
         self.models_reid, self.models_img = {}, {}
+        # generic models (e.g sklearn, that run on reid emeddings)
+        self.models_reid_generic = {}
         self.batch_size = batch_size
 
         for name, path in model_paths_by_attribute.items():
-            model = torch.load(path)
-            model.eval()
-            if fp16:
-                model.half()
-            model.to(device)
-            if net_is_convolutional(model):
-                self.models_img[name] = model
-            else:
-                self.models_reid[name] = model
+            if path.endswith((".pth", ".pt")):
+                model = torch.load(path)
+                model.eval()
+                if fp16:
+                    model.half()
+                model.to(device)
+                if net_is_convolutional(model):
+                    self.models_img[name] = model
+                else:
+                    self.models_reid[name] = model
+            elif path.endswith(".pkl"):
+                with open(path, "rb") as f:
+                    model = pickle.load(f)
+                self.models_reid_generic[name] = model
         self.reid_extractor = None if len(
             self.models_reid) == 0 else AttributeExtractor(self.models_reid)
         if len(self.models_img) == 0:
@@ -105,14 +114,22 @@ class AttributeExtractorMixed:
             self.cnn_extractor = create_extractor(
                 AttributeExtractor, models=self.models_img, batch_size=batch_size)
         log.debug(f"Attribute extractors loaded. Exracted from re-id: {list(self.models_reid.keys())}, "
-                  f"Extracted from images: {list(self.models_img.keys())}.")
+                  f"Extracted from images: {list(self.models_img.keys())}, "
+                  f"Extracted from reid by generic models: {list(self.models_reid_generic.keys())}.")
 
     def __call__(self, frame: np.ndarray, bboxes: List[Union[List, np.ndarray]], X_reid: torch.Tensor):
         """Computes attributes from image inputs and/or re-id feature inputs."""
         result = {}
+        # run prediction for generic models (sklearn) on reid embeddings
+        for attr, model in self.models_reid_generic.items():
+            result[attr] = list(model.predict(X_reid))
+
+        # predict from reid embeddings using torch FCNN networks (if any)
         if self.reid_extractor is not None:
             for k, v in self.reid_extractor(X_reid, batch_size=self.batch_size).items():
                 result[k] = v
+
+        # predict from images using torch CNNs (if any)
         if self.cnn_extractor is not None:
             res = self.cnn_extractor(frame, bboxes)
             if res:

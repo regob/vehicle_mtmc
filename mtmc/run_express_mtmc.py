@@ -35,6 +35,8 @@ def run_express_mtmc(cfg: CfgNode):
         cam_dir = os.path.join(cfg.OUTPUT_DIR, f"{cam_idx}_{cam_video_name}")
         cam_dirs.append(cam_dir)
         cam_cfg.OUTPUT_DIR = cam_dir
+        if len(cfg.EVAL.GROUND_TRUTHS) == len(cfg.EXPRESS.CAMERAS):
+            cam_cfg.EVAL.GROUND_TRUTHS = [cfg.EVAL.GROUND_TRUTHS[cam_idx]]
         cam_cfg.freeze()
 
         mot_configs.append(cam_cfg)
@@ -45,7 +47,7 @@ def run_express_mtmc(cfg: CfgNode):
 
     # run MOT in all cameras
     for mot_conf in mot_configs:
-        run_mot(mot_conf)
+        run_mot(mot_conf)        
 
     log.info("Express: Running MOT on all cameras finished. Running MTMC...")
 

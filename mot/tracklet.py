@@ -121,35 +121,58 @@ class Tracklet:
         self.static_attributes = static_f
         return static_f
 
-    def finalize_speed(self, min_area=25 * 25, mean_mul=2.0, window_size=5):
+    def finalize_speed(self, mean_mul=2.0, window_size=5, max_speed=180):
         """Refines per-frame speed values."""
         if "speed" not in self.dynamic_attributes:
             return
         speeds = self.dynamic_attributes["speed"]
-        mean = sum(speeds) / len(speeds)
+        if len(speeds) == 0:
+            return
 
-        # set the first few bad measurements to the first reasonable one
+        # set the first few missing measurements to the first non-missing one
         for i in range(len(speeds)):
-            box = self.bboxes[i]
-            if box[2] * box[3] >= min_area and (mean_mul * mean >= speeds[i] >= mean / mean_mul):
-                speeds[:i] = [speeds[i]] * i
-                break
+            if speeds[i] < 0 or speeds[i] > max_speed:
+                continue
+            speeds[:i] = [speeds[i]] * i
+            break
         start = i
 
-        # set the last few bad measurements to the last reasonable one
+        # set the last few missing measurements to the last non-missing one
         for i in reversed(range(len(speeds))):
-            box = self.bboxes[i]
-            if box[2] * box[3] >= min_area and (mean_mul * mean >= speeds[i] >= mean / mean_mul):
-                speeds[i:] = [speeds[i]] * (len(speeds) - i)
-                break
+            if speeds[i] < 0 or speeds[i] > max_speed:
+                continue
+            speeds[i:] = [speeds[i]] * (len(speeds) - i)
+            break
         end = i
 
-        # smoothen values with a sliding window
+        # fill missing values forward
+        fw_fill = []
         for i in range(start, end + 1):
+            if speeds[i] < 0 or speeds[i] > max_speed:
+                fw_fill.append(fw_fill[-1])
+            else:
+                fw_fill.append(speeds[i])
+
+        # fill missing values backward
+        bw_fill = []
+        for i in range(end, start - 1, -1):
+            if speeds[i] < 0 or speeds[i] > max_speed:
+                bw_fill.append(bw_fill[-1])
+            else:
+                bw_fill.append(speeds[i])
+        bw_fill.reverse()
+
+        # set the [start, end] range to the mean of the fw and the bw filled values
+        if end > start:
+            speeds[start:end+1] = [int((x + y)/2) for (x,y) in zip(fw_fill, bw_fill)]
+
+
+        # smoothen values with a sliding window
+        for i in range(len(speeds)):
             l = max(0, i - window_size // 2)
             r = min(len(speeds) - 1, i + window_size // 2)
             speeds[i] = sum(speeds[l:r+1]) // (r - l + 1)
-            
+
 
     def zone_enter_leave_frames(self, zone_id):
         """Frame indices when the track entered and left a given zone."""

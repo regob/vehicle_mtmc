@@ -14,6 +14,7 @@ from mot.video_output import FileVideo, DisplayVideo, annotate_video_with_trackl
 from mot.zones import ZoneMatcher
 from mot.projection_3d import Projector
 from mot.attributes import AttributeExtractorMixed, SpeedEstimator
+from evaluate.run_evaluate import run_evaluation
 
 from reid.feature_extractor import FeatureExtractor
 from reid.vehicle_reid.load_model import load_model_from_opts
@@ -144,6 +145,9 @@ def run_mot(cfg: CfgNode):
 
     # initialize 3d projector and speed estimator
     SPEED_WINDOW_SIZE = max(7, round(video_fps / 2.5))
+    # minimum area of bounding box to consider for speed calculation
+    # about 40x40 in fullHD and 26*26 in HD video
+    SPEED_MIN_AREA = int(0.00075 * video_w * video_h)
     projector = Projector(cfg.MOT.CALIBRATION) if cfg.MOT.CALIBRATION else None
     speed_estimator = SpeedEstimator(projector, video_fps) if projector else None
 
@@ -274,24 +278,26 @@ def run_mot(cfg: CfgNode):
         # estimate speed if possible
         if speed_estimator:
             for track in active_tracks:
-                # only keep bounding boxes that are not cut off
-                # because those result in inaccurate position approximations
-                last_coords = []
+                # only keep bounding boxes that are not cut off / skewed
+                # because those result in inaccurate position approximations:
+                # remaining boxes from the window are stored in last_good_boxes
+                last_good_boxes = []
                 first_frame, last_frame = -1, -1
-                for i in range(len(track.bboxes)-1, -1, -1):
-                    if i == 0 or (not box_change_skewed(track.bboxes[i], track.bboxes[i-1])):
-                        last_coords.append(track.bboxes[i])
+                for i in range(len(track.bboxes) - 1, len(track.bboxes) - SPEED_WINDOW_SIZE - 1, -1):
+                    if i <= 0:
+                        break
+                    if not box_change_skewed(track.bboxes[i], track.bboxes[i-1]):
+                        last_good_boxes.append(track.bboxes[i])
                         first_frame = track.frames[i]
                         if last_frame < 0:
                             last_frame = first_frame
-                    if len(last_coords) == SPEED_WINDOW_SIZE:
-                        break
-                # last_coords = track.bboxes[-SPEED_WINDOW_SIZE:]
-                # first_frame = track.frames[len(track.frames) - len(last_coords)]
-                # last_frame = track.frames[-1]
 
-                last_coords = [(round(x[0] + x[2] / 2), x[1] + x[3]) for x in last_coords]
-                speed = speed_estimator.average_speed(last_coords, last_frame - first_frame)
+                # if there are less than 2 good boxes in the window, cannot estimate speed
+                if len(last_good_boxes) < 2:
+                    speed = -1
+                else:
+                    last_good_pos = [(round(x[0] + x[2] / 2), x[1] + x[3]) for x in last_good_boxes]
+                    speed = speed_estimator.average_speed(last_good_pos, last_frame - first_frame)
                 track.dynamic_attributes.setdefault("speed", []).append(int(speed))
 
         all_attribs_list = [{} for _ in range(len(active_track_ids))]
@@ -365,6 +371,13 @@ def run_mot(cfg: CfgNode):
 
     pkl_save_path = os.path.join(cfg.OUTPUT_DIR, f"{MOT_OUTPUT_NAME}.pkl")
     save_tracklets(final_tracks, pkl_save_path)
+
+    if len(cfg.EVAL.GROUND_TRUTHS) == 1:
+        cfg.defrost()
+        cfg.EVAL.PREDICTIONS = [txt_save_path]
+        cfg.freeze()
+        run_evaluation(cfg)
+
     return final_tracks
 
 

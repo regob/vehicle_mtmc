@@ -12,7 +12,7 @@ MOT:
   DETECTION_MASK: "assets/cityflow/c006_mask.jpg"
   TRACKER: "bytetrack_iou"
   MIN_FRAMES: 5
-  SHOW: true
+  SHOW: false
   VIDEO_OUTPUT: true
   STATIC_ATTRIBUTES:
     - color: "models/color_svm.pkl"

@@ -10,7 +10,7 @@
 
 # The (i,j)-th element of dtmin and dtmax denotes the timeframe for matching.
 # If the track left camera i at t, it has to appear on j 
-# in the interval [t - dtmin, t + dtmax]
+# in the interval [t + dtmin, t + dtmax]
 # infinity is denoted by -inf or inf.
 
 ### camera mapping

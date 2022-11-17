@@ -10,7 +10,7 @@ MOT:
   DETECTOR: "yolov5x6"
   TRACKER: "bytetrack_iou"
   DETECTION_MASK: "assets/highway_mask.jpg"
-  SHOW: true
+  SHOW: false
   VIDEO_OUTPUT: true
   STATIC_ATTRIBUTES:
     - color: "models/color_svm.pkl"

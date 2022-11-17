@@ -8,7 +8,7 @@ from mtmc.run_mtmc import MTMC_TRACKLETS_NAME
 from tools import log
 
 
-CITYFLOW_EXPRESS = "cityflow/express.yaml"
+CITYFLOW_EXPRESS = "cityflow/express_s02.yaml"
 
 
 def check_mot_folder(path):

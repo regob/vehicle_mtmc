@@ -1,23 +1,23 @@
 OUTPUT_DIR: "output/cityflow_s02"
 DEBUG_RUN: false
-FONTSIZE: 13
+FONTSIZE: 15
 MOT:
- REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet101_2048/opts.yaml"
- REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet101_2048/net_31.pth"
- REID_FP16: false
- REID_BATCHSIZE: 1
- DETECTOR: "yolov5x6"
- TRACKER: "bytetrack_iou"
- MIN_FRAMES: 5
- SHOW: true
- VIDEO_OUTPUT: false
- STATIC_ATTRIBUTES:
-   - color: "models/color_resnet101_2048.pth"
-   - type: "models/type_resnet101_2048.pth"
- ATTRIBUTE_INFER_BATCHSIZE: 1
- REFINE: false
+  REID_MODEL_OPTS: "models/resnet50_mixstyle/opts.yaml"
+  REID_MODEL_CKPT: "models/resnet50_mixstyle/net_19.pth"
+  REID_FP16: false
+  REID_BATCHSIZE: 1
+  DETECTOR: "yolov5x6"
+  TRACKER: "bytetrack_iou"
+  MIN_FRAMES: 5
+  SHOW: false
+  VIDEO_OUTPUT: false
+  STATIC_ATTRIBUTES:
+    - color: "models/color_svm.pkl"
+    - type: "models/type_svm.pkl"
+  ATTRIBUTE_INFER_BATCHSIZE: 1
+  REFINE: false
 MTMC:
-  CAMERA_LAYOUT: 'config/cityflow/mtmc_camera_layout.txt'
+  CAMERA_LAYOUT: 'config/cityflow/s02_camera_layout.txt'
   LINKAGE: 'average'
   MIN_SIM: 0.5
 EXPRESS:
@@ -38,7 +38,7 @@ EXPRESS:
 EVAL:
   MIN_IOU: 0.34
   IGNORE_FP: true
-  DROP_SINGLE_CAM: false
+  DROP_SINGLE_CAM: true
   GROUND_TRUTHS:
     - "datasets/cityflow_track3/validation/S02/c006/gt/gt.txt"
     - "datasets/cityflow_track3/validation/S02/c007/gt/gt.txt"

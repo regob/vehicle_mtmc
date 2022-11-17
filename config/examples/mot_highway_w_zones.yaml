@@ -17,3 +17,7 @@ MOT:
     - type: "models/type_svm.pkl"
   ATTRIBUTE_INFER_BATCHSIZE: 1
   REFINE: false
+  ZONE_MASK_DIR: "assets/zones/highway/"
+  VALID_ZONEPATHS:
+    - "^(1,)+(0(,0)*,)?2(,2)*$"
+    - "^(4,)+(0(,0)*,)?3(,3)*$"

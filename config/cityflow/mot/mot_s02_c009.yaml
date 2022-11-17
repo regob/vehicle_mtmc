@@ -1,15 +1,17 @@
-OUTPUT_DIR: "output/mot_highway"
-FONTSIZE: 11
+OUTPUT_DIR: "output/cityflow_s02_c009"
+FONTSIZE: 15
+DEBUG_RUN: true
 MOT:
-  VIDEO: "datasets/highway.mp4"
+  VIDEO: "datasets/cityflow_track3/validation/S02/c009/vdo.avi"
   REID_MODEL_OPTS: "models/resnet50_mixstyle/opts.yaml"
   REID_MODEL_CKPT: "models/resnet50_mixstyle/net_19.pth"
-  CALIBRATION: "config/examples/highway_calibration.txt"
+  CALIBRATION: "datasets/cityflow_track3/validation/S02/c009/calibration.txt"
   REID_FP16: false
   REID_BATCHSIZE: 1
   DETECTOR: "yolov5x6"
+  DETECTION_MASK: "assets/cityflow/c009_mask.jpg"
   TRACKER: "bytetrack_iou"
-  DETECTION_MASK: "assets/highway_mask.jpg"
+  MIN_FRAMES: 5
   SHOW: true
   VIDEO_OUTPUT: true
   STATIC_ATTRIBUTES:
@@ -17,3 +19,4 @@ MOT:
     - type: "models/type_svm.pkl"
   ATTRIBUTE_INFER_BATCHSIZE: 1
   REFINE: false
+   

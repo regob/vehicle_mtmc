@@ -1,17 +1,17 @@
-OUTPUT_DIR: "output/cityflow_mtmc_eval"
+OUTPUT_DIR: "output/cityflow_s02_mtmc_eval"
 MTMC:
-  CAMERA_LAYOUT: 'config/cityflow/mtmc_camera_layout.txt'
+  CAMERA_LAYOUT: 'config/cityflow/s02_camera_layout.txt'
   PICKLED_TRACKLETS:
-    - "output/cityflow_s02/0_vdo/vdo.pkl"
-    - "output/cityflow_s02/1_vdo/vdo.pkl"
-    - "output/cityflow_s02/2_vdo/vdo.pkl"
-    - "output/cityflow_s02/3_vdo/vdo.pkl"
+    - "output/cityflow_s02/0_vdo/mot.pkl"
+    - "output/cityflow_s02/1_vdo/mot.pkl"
+    - "output/cityflow_s02/2_vdo/mot.pkl"
+    - "output/cityflow_s02/3_vdo/mot.pkl"
   LINKAGE: 'single'
-  MIN_SIM: 0.52
+  MIN_SIM: 0.5
 EVAL:
   MIN_IOU: 0.34
   IGNORE_FP: true
-  DROP_SINGLE_CAM: false
+  DROP_SINGLE_CAM: true
   GROUND_TRUTHS:
     - "datasets/cityflow_track3/validation/S02/c006/gt/gt.txt"
     - "datasets/cityflow_track3/validation/S02/c007/gt/gt.txt"

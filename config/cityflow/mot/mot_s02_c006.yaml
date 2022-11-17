@@ -1,10 +1,10 @@
 OUTPUT_DIR: "output/cityflow_s02_c006"
-FONTSIZE: 24
-DEBUG_RUN: true
+FONTSIZE: 15
+DEBUG_RUN: false
 MOT:
   VIDEO: "datasets/cityflow_track3/validation/S02/c006/vdo.avi"
-  REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet50_cityflow/opts.yaml"
-  REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet50_cityflow/net_15.pth"
+  REID_MODEL_OPTS: "models/resnet50_mixstyle/opts.yaml"
+  REID_MODEL_CKPT: "models/resnet50_mixstyle/net_19.pth"
   CALIBRATION: "datasets/cityflow_track3/validation/S02/c006/calibration.txt"
   REID_FP16: false
   REID_BATCHSIZE: 1
@@ -15,8 +15,8 @@ MOT:
   SHOW: true
   VIDEO_OUTPUT: true
   STATIC_ATTRIBUTES:
-    - color: "models/color_net_verzal.pth"
-    - type: "models/type_net_verzal_2.pth"
+    - color: "models/color_svm.pkl"
+    - type: "models/type_svm.pkl"
   ATTRIBUTE_INFER_BATCHSIZE: 1
   REFINE: false
    

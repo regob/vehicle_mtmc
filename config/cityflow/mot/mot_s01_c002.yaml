@@ -1,15 +1,15 @@
-OUTPUT_DIR: "output/cityflow_s02_c009"
+OUTPUT_DIR: "output/cityflow_s01_c002"
 FONTSIZE: 15
 DEBUG_RUN: false
 MOT:
-  VIDEO: "datasets/cityflow_track3/validation/S02/c009/vdo.avi"
+  VIDEO: "datasets/cityflow_track3/train/S01/c002/vdo.avi"
   REID_MODEL_OPTS: "models/resnet50_mixstyle/opts.yaml"
   REID_MODEL_CKPT: "models/resnet50_mixstyle/net_19.pth"
-  CALIBRATION: "datasets/cityflow_track3/validation/S02/c009/calibration.txt"
+  CALIBRATION: "datasets/cityflow_track3/train/S01/c002/calibration.txt"
   REID_FP16: false
   REID_BATCHSIZE: 1
   DETECTOR: "yolov5x6"
-  DETECTION_MASK: "assets/cityflow/c009_mask.jpg"
+  DETECTION_MASK: "datasets/cityflow_track3/train/S01/c002/roi.jpg"
   TRACKER: "bytetrack_iou"
   MIN_FRAMES: 5
   SHOW: false
@@ -19,4 +19,9 @@ MOT:
     - type: "models/type_svm.pkl"
   ATTRIBUTE_INFER_BATCHSIZE: 1
   REFINE: false
-   
+EVAL:
+  MIN_IOU: 0.34
+  IGNORE_FP: true
+  GROUND_TRUTHS:
+    - "datasets/cityflow_track3/train/S01/c002/gt/gt.txt"
+

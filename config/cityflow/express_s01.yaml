@@ -1,0 +1,51 @@
+OUTPUT_DIR: "output/cityflow_s01"
+DEBUG_RUN: false
+FONTSIZE: 15
+MOT:
+  REID_MODEL_OPTS: "models/resnet50_mixstyle/opts.yaml"
+  REID_MODEL_CKPT: "models/resnet50_mixstyle/net_19.pth"
+  REID_FP16: false
+  REID_BATCHSIZE: 1
+  DETECTOR: "yolov5x6"
+  TRACKER: "bytetrack_iou"
+  MIN_FRAMES: 5
+  SHOW: false
+  VIDEO_OUTPUT: false
+  STATIC_ATTRIBUTES:
+    - color: "models/color_svm.pkl"
+    - type: "models/type_svm.pkl"
+  REFINE: false
+MTMC:
+  CAMERA_LAYOUT: 'config/cityflow/s01_camera_layout.txt'
+  LINKAGE: 'average'
+  MIN_SIM: 0.5
+EXPRESS:
+  FINAL_VIDEO_OUTPUT: true
+  CAMERAS:
+    - "video": "datasets/cityflow_track3/train/S01/c001/vdo.avi"
+      "detection_mask": "datasets/cityflow_track3/train/S01/c001/roi.jpg"
+      "calibration": "datasets/cityflow_track3/train/S01/c001/calibration.txt"
+    - "video": "datasets/cityflow_track3/train/S01/c002/vdo.avi"
+      "detection_mask": "datasets/cityflow_track3/train/S01/c002/roi.jpg"
+      "calibration": "datasets/cityflow_track3/train/S01/c002/calibration.txt"
+    - "video": "datasets/cityflow_track3/train/S01/c003/vdo.avi"
+      "detection_mask": "datasets/cityflow_track3/train/S01/c003/roi.jpg"
+      "calibration": "datasets/cityflow_track3/train/S01/c003/calibration.txt"
+    - "video": "datasets/cityflow_track3/train/S01/c004/vdo.avi"
+      "detection_mask": "datasets/cityflow_track3/train/S01/c004/roi.jpg"
+      "calibration": "datasets/cityflow_track3/train/S01/c004/calibration.txt"
+    - "video": "datasets/cityflow_track3/train/S01/c005/vdo.avi"
+      "detection_mask": "datasets/cityflow_track3/train/S01/c005/roi.jpg"
+      "calibration": "datasets/cityflow_track3/train/S01/c005/calibration.txt"
+EVAL:
+  MIN_IOU: 0.34
+  IGNORE_FP: true
+  DROP_SINGLE_CAM: true
+  GROUND_TRUTHS:
+    - "datasets/cityflow_track3/train/S01/c001/gt/gt.txt"
+    - "datasets/cityflow_track3/train/S01/c002/gt/gt.txt"
+    - "datasets/cityflow_track3/train/S01/c003/gt/gt.txt"
+    - "datasets/cityflow_track3/train/S01/c004/gt/gt.txt"
+    - "datasets/cityflow_track3/train/S01/c005/gt/gt.txt"
+
+    

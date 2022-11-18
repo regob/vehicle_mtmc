@@ -161,6 +161,6 @@ class SpeedEstimator:
         total_dist = dist(coords[0], coords[-1])
         dists = [dist_planar(coords[i], coords[i+1]) for i in range(len(coords)-1)]
         partial_dist = sum(dists)
-        real_dist = partial_dist if partial_dist / total_dist <=  max_dist_ratio else total_dist
+        real_dist = partial_dist if partial_dist / max(total_dist, 1e-5) <=  max_dist_ratio else total_dist
         return real_dist * (self.frame_rate / total_frames)  * 3.6
 

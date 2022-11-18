@@ -27,7 +27,7 @@ class CameraLayout:
                 self.fps = numberline(float)
             elif line == "offset":
                 self.offset = numberline(float)
-            elif line == "scale":
+            elif line == "scales":
                 self.scales = numberline(float)
             elif line == "compatibility":
                 line = numberline(int)

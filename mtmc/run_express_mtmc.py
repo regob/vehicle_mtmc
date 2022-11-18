@@ -47,12 +47,13 @@ def run_express_mtmc(cfg: CfgNode):
 
     # run MOT in all cameras
     for mot_conf in mot_configs:
-        run_mot(mot_conf)        
+        run_mot(mot_conf)
 
     log.info("Express: Running MOT on all cameras finished. Running MTMC...")
 
     # run MTMC
-    pickle_paths = [os.path.join(path, f"{MOT_OUTPUT_NAME}.pkl") for path in cam_dirs]
+    pickle_paths = [os.path.join(
+        path, f"{MOT_OUTPUT_NAME}.pkl") for path in cam_dirs]
     mtmc_cfg = cfg.clone()
     mtmc_cfg.defrost()
     mtmc_cfg.MTMC.PICKLED_TRACKLETS = pickle_paths
@@ -62,9 +63,12 @@ def run_express_mtmc(cfg: CfgNode):
     log.info("Express: Running MTMC on all cameras finished. Saving final results ...")
 
     # save single cam tracks
-    final_pickle_paths = [os.path.join(d, f"{MTMC_OUTPUT_NAME}.pkl") for d in cam_dirs]
-    final_csv_paths = [os.path.join(d, f"{MTMC_OUTPUT_NAME}.csv") for d in cam_dirs]
-    final_txt_paths = [os.path.join(d, f"{MTMC_OUTPUT_NAME}.txt") for d in cam_dirs]
+    final_pickle_paths = [os.path.join(
+        d, f"{MTMC_OUTPUT_NAME}.pkl") for d in cam_dirs]
+    final_csv_paths = [os.path.join(
+        d, f"{MTMC_OUTPUT_NAME}.csv") for d in cam_dirs]
+    final_txt_paths = [os.path.join(
+        d, f"{MTMC_OUTPUT_NAME}.txt") for d in cam_dirs]
     save_tracklets_per_cam(mtracks, final_pickle_paths)
     save_tracklets_txt_per_cam(mtracks, final_txt_paths)
     save_tracklets_csv_per_cam(mtracks, final_csv_paths)
@@ -73,29 +77,32 @@ def run_express_mtmc(cfg: CfgNode):
         for i, cam_dir in enumerate(cam_dirs):
             video_in = mot_configs[i].MOT.VIDEO
             video_ext = video_in.split(".")[1]
-            video_out = os.path.join(cam_dir, f"{MTMC_OUTPUT_NAME}.{video_ext}")
-            annotate_video_mtmc(video_in, video_out, mtracks, i, font=cfg.FONT, fontsize=cfg.FONTSIZE)
+            video_out = os.path.join(
+                cam_dir, f"{MTMC_OUTPUT_NAME}.{video_ext}")
+            annotate_video_mtmc(video_in, video_out, mtracks,
+                                i, font=cfg.FONT, fontsize=cfg.FONTSIZE)
             log.info(f"Express: video {i} saved.")
 
     if len(cfg.EVAL.GROUND_TRUTHS) == 0:
         log.info("Ground truths are not provided for evaluation, terminating.")
         return mtracks
-        
+
     log.info("Ground truth annotations are provided, trying to evaluate MTMC ...")
     if len(cfg.EVAL.GROUND_TRUTHS) != len(cam_names):
-        log.error("Number of ground truth files != number of cameras, aborting evaluation ...")
+        log.error(
+            "Number of ground truth files != number of cameras, aborting evaluation ...")
         return mtracks
 
     mtmc_cfg.defrost()
     mtmc_cfg.EVAL.PREDICTIONS = final_txt_paths
     mtmc_cfg.freeze()
     eval_res = run_evaluation(mtmc_cfg)
-    
+
     if eval_res:
         log.info("Evaluation successful.")
     else:
         log.error("Evaluation unsuccessful: probably EVAL config had some errors.")
-    
+
     return mtracks
 
 

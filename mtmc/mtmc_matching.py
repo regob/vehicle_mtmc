@@ -18,8 +18,8 @@ def _flatten_tracks_with_cam_info(tracks: List[List[Tracklet]], cams: CameraLayo
     for i, cam_tracks in enumerate(tracks):
         for track in cam_tracks:
             track.cam = i
-            track.global_start = track.frames[0] / cams.fps[i] + cams.offset[i]
-            track.global_end = track.frames[-1] / cams.fps[i] + cams.offset[i]
+            track.global_start = track.frames[0] / cams.fps[i] / cams.scales[i] + cams.offset[i]
+            track.global_end = track.frames[-1] / cams.fps[i] / cams.scales[i] + cams.offset[i]
             flat_tracks.append(track)
     return flat_tracks
 

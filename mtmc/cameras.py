@@ -6,6 +6,7 @@ class CameraLayout:
         self.offset, self.compatibility = [], []
         self.dtmin, self.dtmax = [], []
         self.fps = []
+        self.scales = []
         self.n_cams = None
 
         f = open(camera_layout_path, "r")
@@ -26,6 +27,8 @@ class CameraLayout:
                 self.fps = numberline(float)
             elif line == "offset":
                 self.offset = numberline(float)
+            elif line == "scale":
+                self.scales = numberline(float)
             elif line == "compatibility":
                 line = numberline(int)
                 self.compatibility.append(line)

@@ -76,6 +76,8 @@ class Tracklet:
         -------
         mean_feature: np.array
         """
+        if len(self.features) == 0:
+            return self._mean_feature
         self._mean_feature = np.zeros_like(self.features[0])
         if method == "area_avg":
             div = min(map(lambda x: x[2] * x[3], self.bboxes))

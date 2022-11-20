@@ -1,7 +1,6 @@
-
-
 class CameraLayout:
     """A camera layout for multi camera tracking."""
+    
     def __init__(self, camera_layout_path: str):
         self.offset, self.compatibility = [], []
         self.dtmin, self.dtmax = [], []
@@ -12,6 +11,7 @@ class CameraLayout:
         f = open(camera_layout_path, "r")
 
         def numberline(_type):
+            """Read a line of numbers of the given type"""
             return list(map(_type, f.readline().strip().split()))
         
         line = f.readline()
@@ -49,7 +49,8 @@ class CameraLayout:
                 
             line = f.readline()
 
-        """some asserts to make sure the file was loaded correctly..."""
+        # Some asserts to make sure the file was loaded correctly.
+        # The length of vectors has to be n_cams, and for matrices (n_cams x n_cams)
         for val in [self.n_cams, self.offset, self.fps, self.dtmax, self.dtmin, self.compatibility]:
             assert val, "Missing sections from camera layout file"
         assert len(self.dtmin) == self.n_cams
@@ -70,7 +71,7 @@ class CameraLayout:
                     bmp |= 1 << idx
             return bmp
         
-        """self.compatibility converted to bitmaps (jth bit means compatibility with c_j)."""
+        # self.compatibility converted to bitmaps (jth bit means compatibility with c_j).
         self._compatibility_bitmaps = [to_bitmap(vals) for vals in self.compatibility]
 
     @property

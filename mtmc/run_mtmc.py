@@ -8,7 +8,7 @@ from config.defaults import get_cfg_defaults
 from config.verify_config import check_mtmc_config, global_checks
 from config.config_tools import expand_relative_paths
 from mtmc.cameras import CameraLayout
-from mtmc.mtmc_matching import greedy_mtmc_matching
+from mtmc.mtmc_clustering import mtmc_clustering
 from mtmc.output import save_tracklets_csv_per_cam, save_tracklets_per_cam, save_tracklets_txt_per_cam
 from tools import log
 from tools.util import parse_args
@@ -37,16 +37,19 @@ def run_mtmc(cfg: CN):
         os.makedirs(cfg.OUTPUT_DIR)
         
     # load camera layout
-    cams = CameraLayout(cfg.MTMC.CAMERA_LAYOUT)
-    log.info("Camera layout loaded with %s cams.", cams.n_cams)
+    if cfg.MTMC.CAMERA_LAYOUT is None:
+        cams = None
+    else:
+        cams = CameraLayout(cfg.MTMC.CAMERA_LAYOUT)
+        log.info("Camera layout loaded with %s cams.", cams.n_cams)
 
-    # load tracklets
-    tracks = []
-    if len(cfg.MTMC.PICKLED_TRACKLETS) != cams.n_cams:
+    if cams and len(cfg.MTMC.PICKLED_TRACKLETS) != cams.n_cams:
         log.error("Number of pickled tracklets (%s) != number of cameras (%s)",
                   len(cfg.MTMC.PICKLED_TRACKLETS), cams.n_cams)
         sys.exit(1)
-
+        
+    # load the pickled lists of tracks per camera
+    tracks = []
     for path in cfg.MTMC.PICKLED_TRACKLETS:
         tracks.append(load_pickle(path))
         log.info("Tracklets loaded for camera %s: %s in total.",
@@ -55,9 +58,10 @@ def run_mtmc(cfg: CN):
     for cam_tracks in tracks:
         for track in cam_tracks:
             track.compute_mean_feature()
+    
+    multicam_tracks = mtmc_clustering(tracks, cams, min_sim=cfg.MTMC.MIN_SIM,
+                                      linkage=cfg.MTMC.LINKAGE)
 
-    multicam_tracks = greedy_mtmc_matching(tracks, cams, min_sim=cfg.MTMC.MIN_SIM,
-                                           linkage=cfg.MTMC.LINKAGE)
     mtmc_pickle_path = os.path.join(cfg.OUTPUT_DIR, f"{MTMC_TRACKLETS_NAME}.pkl")
     with open(mtmc_pickle_path, "wb") as f:
         pickle.dump(multicam_tracks, f, pickle.HIGHEST_PROTOCOL)

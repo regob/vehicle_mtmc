@@ -351,10 +351,16 @@ def run_mot(cfg: CfgNode):
         track.finalize_speed()
 
     log.info("Tracking done. #Tracklets: {}".format(len(final_tracks)))
-    if cfg.MOT.REFINE:
-        final_tracks = refine_tracklets(final_tracks, zone_matcher)[0]
-        log.info("Refinement done. #Tracklets remain: {}".format(
-            len(final_tracks)))
+    # if cfg.MOT.REFINE:
+    #     final_tracks = refine_tracklets(final_tracks, zone_matcher)[0]
+    #     log.info("Refinement done. #Tracklets remain: {}".format(
+    #         len(final_tracks)))
+
+    # compute mean features for tracks and delete frame-by-frame re-id features
+    for track in final_tracks:
+        track.compute_mean_feature()
+        track.features = []
+
 
     if cfg.MOT.VIDEO_OUTPUT:
         annotate_video_with_tracklets(cfg.MOT.VIDEO,

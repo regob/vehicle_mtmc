@@ -50,7 +50,7 @@ class MulticamTracklet:
 
     @property
     def cams(self):
-        """Camera occurence bitmap."""
+        """Camera occurrence bitmap."""
         if self._cams is None:
             self._cams = 0
             for track in self._tracks:

@@ -9,7 +9,7 @@ MTMC:
   LINKAGE: 'single'
   MIN_SIM: 0.5
 EVAL:
-  MIN_IOU: 0.34
+  MIN_IOU: 0.35
   IGNORE_FP: true
   DROP_SINGLE_CAM: true
   GROUND_TRUTHS:

@@ -49,7 +49,7 @@ isolated_mot_checks = {
 }
 
 common_mtmc_checks = {
-    "CAMERA_LAYOUT": os.path.isfile,
+    "CAMERA_LAYOUT": lambda x: x is None or (_is(str)(x) and os.path.isfile(x)),
     "LINKAGE": lambda x: _is(str)(x) and x in ["average", "single", "complete", "mean_feature"],
     "MIN_SIM": lambda x: _is(float)(x) and x >= -1.0,
 }

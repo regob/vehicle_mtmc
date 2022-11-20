@@ -1,6 +1,6 @@
 OUTPUT_DIR: "output/cityflow_s02"
 EVAL:
-  MIN_IOU: 0.34
+  MIN_IOU: 0.35
   IGNORE_FP: true
   DROP_SINGLE_CAM: true
   GROUND_TRUTHS:

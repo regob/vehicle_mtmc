@@ -36,7 +36,7 @@ EXPRESS:
       "detection_mask": "assets/cityflow/c009_mask.jpg"
       "calibration": "datasets/cityflow_track3/validation/S02/c009/calibration.txt"
 EVAL:
-  MIN_IOU: 0.34
+  MIN_IOU: 0.35
   IGNORE_FP: true
   DROP_SINGLE_CAM: true
   GROUND_TRUTHS:

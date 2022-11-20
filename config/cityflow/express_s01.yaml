@@ -38,7 +38,7 @@ EXPRESS:
       "detection_mask": "datasets/cityflow_track3/train/S01/c005/roi.jpg"
       "calibration": "datasets/cityflow_track3/train/S01/c005/calibration.txt"
 EVAL:
-  MIN_IOU: 0.34
+  MIN_IOU: 0.35
   IGNORE_FP: true
   DROP_SINGLE_CAM: true
   GROUND_TRUTHS:

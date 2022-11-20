@@ -123,7 +123,7 @@ def mtmc_clustering(tracks: List[List[Tracklet]],
         return False
     
     # precompute similarities between tracks
-    f = torch.Tensor([tr.mean_feature for tr in all_tracks])
+    f = torch.Tensor(np.stack([tr.mean_feature for tr in all_tracks]))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     f.to(device)
     sim = torch.matmul(f, f.T).cpu().numpy()

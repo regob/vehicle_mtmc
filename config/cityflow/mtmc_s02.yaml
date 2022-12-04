@@ -6,7 +6,7 @@ MTMC:
     - "output/cityflow_s02/1_vdo/mot.pkl"
     - "output/cityflow_s02/2_vdo/mot.pkl"
     - "output/cityflow_s02/3_vdo/mot.pkl"
-  LINKAGE: 'single'
+  LINKAGE: 'average'
   MIN_SIM: 0.5
 EVAL:
   MIN_IOU: 0.35

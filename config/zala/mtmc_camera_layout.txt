@@ -2,15 +2,20 @@
 
 # fps is the frame rate of each camera
 
-# offsets denote the time difference between cameras, if these values are
-# added to them respectively, they become synchronized
+# scales and offsets help synchronize the cameras
+# scales help to adjust multiplicative difference:
+# e.g the same events take t1 time on camera1, and t2 on camera2, then the scales can be: 1.0, t2/t1
+# meaning that what takes 1.0 time on camera1 it takes t2/t1 time on camera2
+
+# offsets denote the additive difference between cameras:
+# if camera2 starts 10 seconds after camera1, offsets can be: 0.0, 10.0
 
 # The (i,j)-th element of the compatibility matrix shows whether a track from
 # the j-th camera can be appended to one in the i-th camera.
 
 # The (i,j)-th element of dtmin and dtmax denotes the timeframe for matching.
 # If the track left camera i at t, it has to appear on j 
-# in the interval [t - dtmin, t + dtmax]
+# in the interval [t + dtmin, t + dtmax]
 # infinity is denoted by -inf or inf.
 
 ### camera mapping
@@ -21,6 +26,9 @@
 
 fps
 24.92 25.0 25.33 25.23
+
+scales
+1.0 0.9917 0.9917 0.9593
 
 offset
 -13.0 -9.2 -10.5 -8.5

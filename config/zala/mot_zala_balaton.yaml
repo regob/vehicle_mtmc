@@ -1,27 +1,27 @@
 OUTPUT_DIR: "output/zala_balaton"
-FONTSIZE: 18
+FONTSIZE: 13
 DEBUG_RUN: false
 MOT:
   VIDEO: "datasets/Zalaegerszeg/balaton.mp4"
-  REID_MODEL_OPTS: "reid/vehicle_reid/model/resnet101_2048/opts.yaml"
-  REID_MODEL_CKPT: "reid/vehicle_reid/model/resnet101_2048/net_31.pth"
-  CALIBRATION: "/mnt/stuff/school_shared/onlab2/Cal_PnP/data/balaton/calibration.txt"
+  REID_MODEL_OPTS: "models/resnet50_mixstyle/opts.yaml"
+  REID_MODEL_CKPT: "models/resnet50_mixstyle/net_19.pth"
+  CALIBRATION: "config/zala/calibration_balaton.txt"
   REID_FP16: false
   REID_BATCHSIZE: 1
   DETECTOR: "yolov5x6"
-  DETECTION_MASK: "assets/balaton_mask.jpg"
+  DETECTION_MASK: "assets/zala/balaton_mask.jpg"
   TRACKER: "bytetrack_iou"
   MIN_FRAMES: 5
-  SHOW: true
+  SHOW: false
   VIDEO_OUTPUT: true
   STATIC_ATTRIBUTES:
-   - color: "models/color_resnet101_2048.pth"
-   - type: "models/type_resnet101_2048.pth"
+   - color: "models/color_svm.pkl"
+   - type: "models/type_svm.pkl"
   ATTRIBUTE_INFER_BATCHSIZE: 1
   ZONE_MASK_DIR: "assets/zones/balaton/"
   VALID_ZONEPATHS:
     - "^(1,)+(0(,0)*,)?2(,2)*$"
     - "^(2,)+(0(,0)*,)?1(,1)*$"
     - "^2(,2)*$"
-  REFINE: false
+
    

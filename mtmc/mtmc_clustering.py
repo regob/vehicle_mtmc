@@ -143,7 +143,7 @@ def mtmc_clustering(tracks: List[List[Tracklet]],
     # init merge queue
     for i in range(n):
         for j in range(i + 1, n):
-            if compat[i][j]:
+            if compat[i][j] and sim[i][j] >= min_sim:
                 merge_queue.append((-sim[i][j], timestamp, i, j))
     
     heapq.heapify(merge_queue)

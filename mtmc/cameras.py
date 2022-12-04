@@ -57,6 +57,7 @@ class CameraLayout:
         assert len(self.dtmax) == self.n_cams
         assert len(self.compatibility) == self.n_cams
         assert len(self.offset) == self.n_cams
+        assert len(self.scales) == self.n_cams
         assert len(self.fps) == self.n_cams
         for i in range(self.n_cams):
             assert len(self.dtmin[i]) == self.n_cams

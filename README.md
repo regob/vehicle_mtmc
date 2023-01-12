@@ -89,6 +89,8 @@ Models can be the following:
 - pytorch fully-connected NN that predicts the attribute from the re-id embedding.
 - sklearn/xgboost/etc models that are pickled, and have a `predict(x)` method that predicts from the re-id embedding as a numpy array.
 
+When adding a new attribute besides color and type, its possible values have to be configured in [mot/attributes.py](/mot/attributes.py).
+
 ### Camera calibration and speed estimation
 Camera calibration has to be performed with the [Cal_PNP](https://github.com/zhengthomastang/Cal_PnP) package to get a homography matrix, then the path to the homography matrix has to be configured in `MOT.CALIBRATION`. An example homography matrix file is provided for `highway.mp4` at [config/examples/highway_calibration.txt](config/examples/highway_calibration.txt).
 

@@ -143,13 +143,14 @@ class ByteTrackerIOU(TrackerBase):
             detections, static_attributes, dynamic_attributes)
 
         # create input for bytetrack in the form of tlbr + score records
-        byte_input = np.zeros((len(detections), 5), np.float)
+        byte_input = np.zeros((len(detections), 5), np.float32)
         for i, det in enumerate(detections):
             byte_input[i, :4] = det.to_tlbr()
             byte_input[i, 4] = det.confidence
 
         stracks = self._tracker.update(byte_input)
-        log.debug(f"Detections: {len(detections)}, active tracks: {len(stracks)}.")
+        log.debug(
+            f"Detections: {len(detections)}, active tracks: {len(stracks)}.")
 
         self._active_track_ids = set()
         for strack in stracks:

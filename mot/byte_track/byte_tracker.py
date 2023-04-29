@@ -11,7 +11,7 @@ class STrack(BaseTrack):
     def __init__(self, tlwh, score, idx=None):
 
         # wait activate
-        self._tlwh = np.asarray(tlwh, dtype=np.float)
+        self._tlwh = np.asarray(tlwh, dtype=np.float32)
         self.kalman_filter = None
         self.mean, self.covariance = None, None
         self.is_activated = False
@@ -217,7 +217,7 @@ class BYTETracker(object):
             dists = matching.fuse_score(dists, detections)
         matches, u_track, u_detection = matching.linear_assignment(
             dists, thresh=self.args.match_thresh)
-        
+
         # print(f"First match: {len(matches)}, {len(u_track)}, {len(u_detection)}.")
 
         for itracked, idet in matches:
@@ -285,7 +285,7 @@ class BYTETracker(object):
                 continue
             track.activate(self.kalman_filter, self.frame_id)
             activated_stracks.append(track)
-            
+
         """ Step 5: Update state"""
         for track in self.lost_stracks:
             if self.frame_id - track.end_frame > self.max_time_lost:

@@ -12,3 +12,5 @@ models/*
 mot/deep_sort_orig/
 .idea
 __py*
+.venv
+.jedi

@@ -27,7 +27,7 @@ This repo contains baseline code for
 Creating a virtual environment is **highly** recommended, except if working in a disposable environment (Kaggle, Colab, etc). Before installing `requirements.txt` cython needs
 to be installed:
 ```bash
-pip install cython numpy
+pip install cython "numpy>=1.18.5,<1.23.0"
 ```
 then install the rest:
 ```bash

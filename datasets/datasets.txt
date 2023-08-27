@@ -1,49 +1,41 @@
+==================================
+Vehicle mtmc datasets
+==================================
+
+Cityflow (Track 3, 2021)
+--------
+https://www.aicitychallenge.org/2021-data-and-evaluation/
+
 
 ==================================
-Datasets
+Vehicle reid datasets
 ==================================
+
+VehicleX
+--------
+https://github.com/yorkeyao/VehicleX
+Possibly generate infinite images with the engine.
 
 model_id: [1, 177]
 color_id: [0, 11]
 0 yellow 1 orange 2 green 3 gray 4 red 5 blue 6 white 7 golden 8 brown 9 black 10 purple 11 pink
 type_id: [0, 10]
 0 sedan 1 suv 2 van 3 hatchback 4 mpv 5 pickup 6 bus 7 truck 8 estate 9 sportscar 10 RV
-car_id: unique number per identity per dataset
-serial: unique number per image per dataset
 
-
-Combined_Vehiclex_dataset ~370K, 1362 ids
------------------------------------------
-	AICity21 VehicleX data (192K)
-	VehicleID VehicleX data (113K)
-	VeRi VehicleX data (72K)
-
-naming: {color_id}_{type_id}_{car_id}_{serial}.jpg
-
-
-AIC21_Track2_ReID 85K, 880 ids
+CityFlow (AIC21_Track2_ReID) 85K, 880 ids
 --------------------------------
-3 spits: train, test, query
-labels in xml
+https://www.aicitychallenge.org/2021-data-and-evaluation/
+Request to access needed.
 
 
 VeRi-Wild 416K, 37K ids
 ------------------------
-BRAND + COLOR ANNOTATION
+https://openaccess.thecvf.com/content_CVPR_2019/html/Lou_VERI-Wild_A_Large_Dataset_and_a_New_Method_for_Vehicle_CVPR_2019_paper.html
+brand + color annotation provided
 
 
 VRIC 54K, 2.8K ids
 -------------------
+https://qmul-vric.github.io/
+
 + 5.6K test images for 2.8K ids
-
-
-Gen_img 32K?
-------------
-naming: {color_id}_{type_id}_{model_id}_{serial}.jpg
-
-
-Gen_img_id 73K?
-----------------
-naming: {color_id}_{type_id}_{model_id}_{car_id}_{serial}.jpg
-
-

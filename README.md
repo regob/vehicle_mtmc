@@ -62,7 +62,7 @@ MOT:
 ```
 > Any car traffic video should be fine for testing, the video from the screenshots can be downloaded as:
 > ```bash
-> $ yt-dlp -o datasets/highway.mp4 https://www.youtube.com/watch?v=nt3D26lrkho
+> $ yt-dlp -f mp4 -o datasets/highway.mp4 https://www.youtube.com/watch?v=nt3D26lrkho
 > ```
 > Install `yt-dlp` or `youtube-dl` for downloading youtube videos (the former bypasses rate limits).
 

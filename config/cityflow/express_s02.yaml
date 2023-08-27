@@ -1,5 +1,5 @@
 OUTPUT_DIR: "output/cityflow_s02"
-DEBUG_RUN: true
+DEBUG_RUN: false
 FONTSIZE: 15
 MOT:
   REID_MODEL_OPTS: "models/resnet50_mixstyle/opts.yaml"

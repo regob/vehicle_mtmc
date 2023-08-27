@@ -8,7 +8,7 @@ alerts](https://img.shields.io/lgtm/alerts/github/regob/vehicle_mtmc?logo=lgtm&l
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-This repo contains baseline code for 
+This repo contains baseline code for  
  - **Multi-Object Tracking (MOT):** Detecting (Yolov5) and tracking (DeepSORT,
    ByteTrack) objects in video streams.  
  - **Determining object attributes:** (like color, type in vehicles, or speed estimation if camera calibration is performed).  
@@ -22,10 +22,13 @@ This repo contains baseline code for
 
 - Nvidia drivers have to be installed (check with `nvidia-smi`), preferably supporting CUDA >11.0.
 - Tested on python3.7 to 3.10.
-- The `requirements.txt` contains a working configuration with torch `1.12.0`, but installing the packages manually with different versions can work too.
+- The `requirements.txt` contains a working configuration with torch `1.13.0`, but installing the packages manually with different versions can work too (older python versions may require older torch versions)
+- A working c++ compiler toolchain, `python-devel` headers and `wheel` are required for installing torch, numpy, and scipy with `pip`. Otherwise the installation will only work with conda.
 
-Creating a virtual environment is **highly** recommended, except if working in a disposable environment (Kaggle, Colab, etc). Before installing `requirements.txt` cython needs
-to be installed:
+Creating a virtual environment is **highly** recommended, except if working in a disposable environment (Kaggle, Colab, etc). 
+
+Before installing `requirements.txt` cython needs to be installed:
+
 ```bash
 pip install cython "numpy>=1.18.5,<1.23.0"
 ```
@@ -45,6 +48,7 @@ Some pretrained models can be downloaded from [Google drive](https://drive.googl
 <img alt="Highway example video" src="assets/highway_tracked.gif">
 
 Running single-cam tracking requires at a minimum a video, a re-id model and a configuration file. A fairly minimal configuration file for the `highway.mp4` example video and pretrained re-id model is below:
+
 ```yaml
 OUTPUT_DIR: "output/mot_highway"
 MOT:
@@ -56,7 +60,14 @@ MOT:
   SHOW: false
   VIDEO_OUTPUT: true
 ```
-If the config file is at `config/examples/mot_highway.yaml`, tracking can be run from the repo root with (PYTHONPATH needs to be set to the root folder):
+> Any car traffic video should be fine for testing, the video from the screenshots can be downloaded as:
+> ```bash
+> $ yt-dlp -o datasets/highway.mp4 https://www.youtube.com/watch?v=nt3D26lrkho
+> ```
+> Install `yt-dlp` or `youtube-dl` for downloading youtube videos (the former bypasses rate limits).
+
+The example configuration is at `config/examples/mot_highway.yaml`. Tracking can be run from the repo root with (`PYTHONPATH` needs to be set to the root folder):
+
 ```bash
 $ export PYTHONPATH=$(pwd)
 $ python3 mot/run_tracker.py --config examples/mot_highway.yaml
@@ -123,11 +134,16 @@ In the MTMC config there are only a few paramteres:
 - `MTMC.LINKAGE` chooses the linkage for hierarchical clustering from ['single', 'complete', 'average'].
 - `MTMC.MIN_SIM` is the minimal similarity between multi-cam tracks above which they can be merged.
 - `MTMC.CAMERA_LAYOUT` stores the **mandatory** camera constraints file. The camera layout file for CityFlow S02 is at [config/cityflow/s02_camera_layout.txt](config/cityflow/s02_camera_layout.txt).
-On Cityflow S02 express MTMC can be run by:
+On Cityflow S02 express MTMC can be run as:
+
 ```bash
 $ export PYTHONPATH=$(pwd)
 $ python3 mtmc/run_express_mtmc.py --config cityflow/express_s02.yaml
 ```
+
+> For running the example config, the S02 scenario of the [Cityflow dataset](https://www.aicitychallenge.org/2021-data-and-evaluation) is needed to be unzipped to `datasets/cityflow_track3/validation`.
+
+
 ## Finetuning/training re-id models
 Models trained by my [reid/vehicle_reid](https://github.com/regob/vehicle_reid) repo are supported out-of-the-box in the configuration. Other torch models could be integrated by modifying the model loading in `mot/run_tracker.py`, which currently looks like this:
 ```python

@@ -27,6 +27,12 @@ This repo contains baseline code for
 
 Creating a virtual environment is **highly** recommended, except if working in a disposable environment (Kaggle, Colab, etc). 
 
+Clone the repo including the submodules:  
+
+```
+git clone --recurse-submodules git@github.com:regob/vehicle_mtmc.git
+```
+
 Before installing `requirements.txt` cython needs to be installed:
 
 ```bash

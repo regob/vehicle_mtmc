@@ -1,5 +1,5 @@
-<h1 align="center"> MTMC Tracking</h1>
-<h3>A modular framework for Multi-target Multi-camera (MTMC) object tracking.</h3>
+<h1 align="center"> Vehicle MTMC Tracking</h1>
+<h3>Baseline code for multi-target (single/multi)-camera object tracking.</h3>
  
 <!-- [![Language grade: Python](https://img.shields.io/lgtm/grade/python/github/regob/vehicle_mtmc)](https://lgtm.com/projects/g/regob/vehicle_mtmc/context:python)
 [![Total

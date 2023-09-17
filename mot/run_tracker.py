@@ -361,7 +361,6 @@ def run_mot(cfg: CfgNode):
         track.compute_mean_feature()
         track.features = []
 
-
     if cfg.MOT.VIDEO_OUTPUT:
         annotate_video_with_tracklets(cfg.MOT.VIDEO,
                                       os.path.join(cfg.OUTPUT_DIR,

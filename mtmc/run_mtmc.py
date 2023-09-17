@@ -35,7 +35,7 @@ def run_mtmc(cfg: CN):
 
     if not os.path.exists(cfg.OUTPUT_DIR):
         os.makedirs(cfg.OUTPUT_DIR)
-        
+
     # load camera layout
     if cfg.MTMC.CAMERA_LAYOUT is None:
         cams = None
@@ -47,7 +47,7 @@ def run_mtmc(cfg: CN):
         log.error("Number of pickled tracklets (%s) != number of cameras (%s)",
                   len(cfg.MTMC.PICKLED_TRACKLETS), cams.n_cams)
         sys.exit(1)
-        
+
     # load the pickled lists of tracks per camera
     tracks = []
     for path in cfg.MTMC.PICKLED_TRACKLETS:
@@ -58,7 +58,7 @@ def run_mtmc(cfg: CN):
     for cam_tracks in tracks:
         for track in cam_tracks:
             track.compute_mean_feature()
-    
+
     multicam_tracks = mtmc_clustering(tracks, cams, min_sim=cfg.MTMC.MIN_SIM,
                                       linkage=cfg.MTMC.LINKAGE)
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     mtracks = run_mtmc(cfg)
 
     log.info("Saving per camera results ...")
-    
+
     # save per camera results
     pkl_paths = []
     for i, pkl_path in enumerate(cfg.MTMC.PICKLED_TRACKLETS):
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     if len(cfg.EVAL.GROUND_TRUTHS) == 0:
         sys.exit(0)
-        
+
     log.info("Ground truth annotations are provided, trying to evaluate MTMC ...")
 
     if len(cfg.EVAL.GROUND_TRUTHS) != len(cfg.MTMC.PICKLED_TRACKLETS):
@@ -124,4 +124,3 @@ if __name__ == "__main__":
         log.info("Evaluation successful.")
     else:
         log.error("Evaluation unsuccessful: probably EVAL config had some errors.")
-

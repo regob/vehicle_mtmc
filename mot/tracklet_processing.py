@@ -33,7 +33,7 @@ def to_detections(tracklets):
     }
     if len(tracklets) == 0:
         return res
-    
+
     for k in tracklets[0].static_attributes:
         res[k] = []
     for k in tracklets[0].dynamic_attributes:
@@ -74,7 +74,7 @@ def save_tracklets_csv(tracklets, path):
     res = to_detections(tracklets)
     df = pd.DataFrame(res)
     df.to_csv(path, index=False)
-    
+
 
 def save_tracklets_txt(tracklets, path):
     """Save tracklets as detections in the MOTChallenge format"""
@@ -87,8 +87,8 @@ def save_tracklets_txt(tracklets, path):
     df["y"] = -1
     df["z"] = -1
     df.to_csv(path, index=False, header=False)
-             
-    
+
+
 def split_tracklet(tracklet: Tracklet, frame_idx: int, new_track_id: int) -> Tracklet:
     """ Split a tracklet into two parts at a given frame index.
     Parameters

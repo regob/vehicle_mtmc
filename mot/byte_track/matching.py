@@ -128,7 +128,7 @@ def embedding_distance(tracks, detections, metric='cosine'):
     det_features = np.asarray(
         [track.curr_feat for track in detections], dtype=np.float32)
     # for i, track in enumerate(tracks):
-    #cost_matrix[i, :] = np.maximum(0.0, cdist(track.smooth_feat.reshape(1,-1), det_features, metric))
+    # cost_matrix[i, :] = np.maximum(0.0, cdist(track.smooth_feat.reshape(1,-1), det_features, metric))
     track_features = np.asarray(
         [track.smooth_feat for track in tracks], dtype=np.float32)
     cost_matrix = np.maximum(0.0, cdist(
@@ -174,7 +174,7 @@ def fuse_iou(cost_matrix, tracks, detections):
     det_scores = np.array([det.score for det in detections])
     det_scores = np.expand_dims(det_scores, axis=0).repeat(
         cost_matrix.shape[0], axis=0)
-    #fuse_sim = fuse_sim * (1 + det_scores) / 2
+    # fuse_sim = fuse_sim * (1 + det_scores) / 2
     fuse_cost = 1 - fuse_sim
     return fuse_cost
 

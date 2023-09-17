@@ -166,15 +166,13 @@ class Tracklet:
 
         # set the [start, end] range to the mean of the fw and the bw filled values
         if end > start:
-            speeds[start:end+1] = [int((x + y)/2) for (x,y) in zip(fw_fill, bw_fill)]
-
+            speeds[start:end+1] = [int((x + y)/2) for (x, y) in zip(fw_fill, bw_fill)]
 
         # smoothen values with a sliding window
         for i in range(len(speeds)):
             l = max(0, i - window_size // 2)
             r = min(len(speeds) - 1, i + window_size // 2)
             speeds[i] = sum(speeds[l:r+1]) // (r - l + 1)
-
 
     def zone_enter_leave_frames(self, zone_id):
         """Frame indices when the track entered and left a given zone."""

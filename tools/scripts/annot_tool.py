@@ -381,8 +381,8 @@ class Main:
         self.max_imgs_per_track = max_imgs_per_track
         self.root = tk.Tk()
         try:
-            #self.root.tk.call("source", "~/.themes/azure/azure.tcl")
-            #self.root.tk.call("set_theme", "dark")
+            # self.root.tk.call("source", "~/.themes/azure/azure.tcl")
+            # self.root.tk.call("set_theme", "dark")
             pass
         except:
             print("Setting azure theme failed.")
@@ -490,7 +490,7 @@ class Main:
             idx = 0
         if idx < len(self.video.ended_tracks):
             self.last_ended_track = self.video.ended_tracks[idx]
-        
+
         if step_valid:
             self.update_tracklet_options()
             return True

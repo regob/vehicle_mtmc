@@ -1,6 +1,6 @@
 class CameraLayout:
     """A camera layout for multi camera tracking."""
-    
+
     def __init__(self, camera_layout_path: str):
         self.offset, self.compatibility = [], []
         self.dtmin, self.dtmax = [], []
@@ -13,7 +13,7 @@ class CameraLayout:
         def numberline(_type):
             """Read a line of numbers of the given type"""
             return list(map(_type, f.readline().strip().split()))
-        
+
         line = f.readline()
         while line:
             if not line:
@@ -46,7 +46,7 @@ class CameraLayout:
                     matrix.append(line)
             else:
                 raise ValueError(f"Error when parsing camera layout at line: '{line}'")
-                
+
             line = f.readline()
 
         # Some asserts to make sure the file was loaded correctly.
@@ -64,26 +64,24 @@ class CameraLayout:
             assert len(self.dtmax[i]) == self.n_cams
             assert len(self.compatibility[i]) == self.n_cams
 
-
         def to_bitmap(vals):
             bmp = 0
             for idx, val in enumerate(vals):
                 if val:
                     bmp |= 1 << idx
             return bmp
-        
+
         # self.compatibility converted to bitmaps (jth bit means compatibility with c_j).
         self._compatibility_bitmaps = [to_bitmap(vals) for vals in self.compatibility]
 
     @property
     def cam_compatibility_bitmaps(self):
         return self._compatibility_bitmaps
-    
+
     def cam_compatibility_bitmap(self, cam_idx):
         return self._compatibility_bitmaps[cam_idx]
 
-            
-    
+
 if __name__ == "__main__":
     # test a layout file
     path = "../config/mtmc_camera_layout.txt"
@@ -94,5 +92,3 @@ if __name__ == "__main__":
     print(f"compatibility: {cam.compatibility}")
     print(f"dtmin: {cam.dtmin}")
     print(f"dtmax: {cam.dtmax}")
-
-    

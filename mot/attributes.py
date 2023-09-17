@@ -126,10 +126,10 @@ class AttributeExtractorMixed:
         # if no bounding boxes on the frame, return empty list for each attribute
         if len(bboxes) == 0:
             for attr in list(self.models_img.keys()) + list(self.models_reid.keys()) + \
-                list(self.models_reid_generic.keys()):
+                    list(self.models_reid_generic.keys()):
                 result[attr] = []
             return result
-        
+
         # run prediction for generic models (sklearn) on reid embeddings
         for attr, model in self.models_reid_generic.items():
             result[attr] = list(model.predict(X_reid))
@@ -152,7 +152,7 @@ class SpeedEstimator:
     def __init__(self, projector: Projector, frame_rate):
         self.projector = projector
         self.frame_rate = frame_rate
-        
+
     def average_speed(self, coords: list, total_frames: int, max_dist_ratio=2.0):
         """Average speed of an object over multiple frames."""
         if len(coords) < 2 or total_frames == 0:
@@ -161,6 +161,5 @@ class SpeedEstimator:
         total_dist = dist(coords[0], coords[-1])
         dists = [dist_planar(coords[i], coords[i+1]) for i in range(len(coords)-1)]
         partial_dist = sum(dists)
-        real_dist = partial_dist if partial_dist / max(total_dist, 1e-5) <=  max_dist_ratio else total_dist
-        return real_dist * (self.frame_rate / total_frames)  * 3.6
-
+        real_dist = partial_dist if partial_dist / max(total_dist, 1e-5) <= max_dist_ratio else total_dist
+        return real_dist * (self.frame_rate / total_frames) * 3.6

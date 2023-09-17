@@ -3,7 +3,7 @@ import numpy as np
 
 class Projector:
     """Projects 2d points to 3d space defined by a homography matrix."""
-    
+
     def __init__(self, camera_matrix_file: str):
 
         # homography matrix: 3d -> 2d
@@ -20,9 +20,9 @@ class Projector:
                 for j, x in enumerate(cols):
                     self.homography[i, j] = float(x)
         self.inv_homography = np.linalg.inv(self.homography)
-        
+
     def project3d(self, x, y):
-        p =  np.matmul(self.inv_homography, np.array([x, y, 1]))
+        p = np.matmul(self.inv_homography, np.array([x, y, 1]))
         p /= p[2]
         return p[:2]
 
@@ -38,7 +38,7 @@ def dist(latlon1, latlon2) -> float:
         Latitude-longitude of point 1.
     latlon2: array_like[2]
         Latitude-longitude of point 2.
-    
+
     Returns:
     -------
     d: float
@@ -66,5 +66,3 @@ def dist_planar(latlon1, latlon2):
     r_avg = R * math.cos((y1 + y2) / 2)
     dx = abs(x1 - x2) * r_avg
     return math.sqrt(dx ** 2 + dy ** 2)
-    
-    

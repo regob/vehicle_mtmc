@@ -38,7 +38,7 @@ def annotate(img_pil, id_label, attributes, tx, ty, bx, by, color, font):
         txt_y = ty - (textcoords[3] - textcoords[1]) - 4
     else:
         txt_y = by
-        
+
     # draw rectangle in the background
     coords = draw.multiline_textbbox((tx, txt_y), text, font=font)
     # add some padding
@@ -58,7 +58,7 @@ class Video:
         for i in np.linspace(0.1, 0.5, 7):
             self.colors.append(cmap2(i)[:3])
         self.HASH_Q = int(1e9 + 7)
-        
+
         try:
             self.font = ImageFont.truetype(font, fontsize)
         except OSError:
@@ -110,7 +110,6 @@ class FileVideo(Video):
         super().__init__(font, fontsize=fontsize)
         self.video = imageio.get_writer(save_path, format=format, mode=mode,
                                         fps=fps, codec=codec, macro_block_size=8)
-
 
     def update(self, frame, track_ids, bboxes, attributes):
         frame = self.render_tracks(frame, track_ids, bboxes, attributes)

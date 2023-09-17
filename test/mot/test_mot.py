@@ -53,4 +53,3 @@ def test_mot_highway():
 
     # still no errors
     assert log.num_errors == 0
-

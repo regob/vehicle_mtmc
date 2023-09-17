@@ -31,7 +31,6 @@ def log_init(log_file, level=logging.DEBUG, tee_stdout=True):
         logger.addHandler(handler)
 
 
-    
 def inc_depth():
     global depth
     depth += 1

@@ -4,7 +4,7 @@ class DSU:
 
     See more at: https://cp-algorithms.com/data_structures/disjoint_set_union.html
     """
-    
+
     def __init__(self, n_elements):
         self.n = n_elements
         self.parent = list(range(n_elements))
@@ -33,4 +33,3 @@ class DSU:
                 x, y = y, x
             self.parent[y] = x
         return x
-    

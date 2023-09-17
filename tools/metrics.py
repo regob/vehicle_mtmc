@@ -23,5 +23,3 @@ def cosine_sim(v1: np.ndarray, v2: np.ndarray, already_normed=False):
     if already_normed:
         return np.dot(v1, v2)
     return np.dot(v1, v2) / np.linalg.norm(v1, 2) / np.linalg.norm(v2, 2)
-
-

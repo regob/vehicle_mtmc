@@ -159,6 +159,14 @@ reid_model = load_model_from_opts(cfg.MOT.REID_MODEL_OPTS,
                                   remove_classifier=True)
 ```
 
+## Citation
+
+If you reuse this work, please consider citing our paper:
+
+Szűcs, G., Borsodi, R., Papp, D. (2023). Multi-Camera Trajectory 
+Matching based on Hierarchical Clustering and Constraints. 
+Multimedia Tools and Applications, https://doi.org/10.1007/s11042-023-17397-0
+
 ##  Acknowledgements
 Some parts are adapted from other repositories:  
     - [nwojke/deep_sort](https://github.com/nwojke/deep_sort): Original

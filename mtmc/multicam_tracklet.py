@@ -18,7 +18,7 @@ class MulticamTracklet:
             raise ValueError(
                 "Invalid single_cam_tracks, at least one is needed.")
         self._tracks = single_cam_tracks
-        self._mean_feature = None
+        self._mean_feature = None           # _mean_feature是当前多相机轨迹的平均ReID特征，通过所有单相机轨迹的平均特征计算得到
         self._cams = None
         self._n_cams = n_cams
 

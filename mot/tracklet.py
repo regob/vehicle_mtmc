@@ -61,36 +61,245 @@ class Tracklet:
         if zone_id is not None:
             self.zones.append(zone_id)
 
-    def compute_mean_feature(self, method="area_avg"):
-        """Compute a single feature from the frame-by-frame features to describe the track.
+    # output
+    # def compute_mean_feature(self, method="area_avg"):
+    #     """Compute a single feature from the frame-by-frame features to describe the track.
 
-        Parameters
-        ----------
-        method: str
-            Method to use from ('area_avg', 'mean').
-            area_avg: sum the features multiplied by the area of the bounding box, then divide the result
-            by the sum of areas.
-            mean: take the unweighted mean of the features.
+    #     Parameters
+    #     ----------
+    #     method: str
+    #         Method to use from ('area_avg', 'mean').
+    #         area_avg: sum the features multiplied by the area of the bounding box, then divide the result
+    #         by the sum of areas.
+    #         mean: take the unweighted mean of the features.
 
-        Returns
-        -------
-        mean_feature: np.array
-        """
+    #     Returns
+    #     -------
+    #     mean_feature: np.array
+    #     """
+    #     if len(self.features) == 0:
+    #         return self._mean_feature
+    #     self._mean_feature = np.zeros_like(self.features[0])
+    #     if method == "area_avg":
+    #         div = min(map(lambda x: x[2] * x[3], self.bboxes))
+    #     for i, f in enumerate(self.features):
+    #         if method == "area_avg":
+    #             area = self.bboxes[i][2] * self.bboxes[i][3]
+    #             self._mean_feature += f * (area / div)
+    #         else:
+    #             self._mean_feature += f
+
+    #     norm = np.linalg.norm(self._mean_feature)
+    #     self._mean_feature = self._mean_feature / norm
+    #     return self._mean_feature
+
+    # # output3
+    # def compute_mean_feature(self, method="adaptive_weighted"):
+    #     if len(self.features) == 0:
+    #         return self._mean_feature
+
+    #     features = np.array(self.features)
+    #     confs = np.array(self.conf)  # 检测置信度
+    #     areas = np.array([w*h for (_, _, w, h) in self.bboxes])  # 框面积
+
+    #     # 1. 归一化置信度和面积
+    #     confs_norm = (confs - confs.min()) / (confs.max() - confs.min() + 1e-6)
+    #     areas_norm = (areas - areas.min()) / (areas.max() - areas.min() + 1e-6)
+
+    #     # 2. 计算帧质量分数（可加权组合）
+    #     quality = 0.7 * confs_norm + 0.3 * areas_norm
+
+    #     # 3. 动态阈值筛选（如只用前80%高分帧）
+    #     thresh = np.percentile(quality, 20)  # 只用高于20分位的帧
+    #     mask = quality > thresh
+    #     features_sel = features[mask]
+    #     quality_sel = quality[mask]
+
+    #     # 4. 自适应加权融合
+    #     weights = quality_sel / (quality_sel.sum() + 1e-6)
+    #     mean_feature = np.sum(features_sel * weights[:, None], axis=0)
+    #     mean_feature = mean_feature / (np.linalg.norm(mean_feature) + 1e-6)
+    #     self._mean_feature = mean_feature
+    #     return self._mean_feature
+
+    # # output4
+    # def compute_mean_feature(self, method="adaptive_weighted"):
+    #     if len(self.features) == 0:
+    #         return self._mean_feature
+
+    #     features = np.array(self.features)
+    #     confs = np.array(self.conf)
+    #     areas = np.array([w*h for (_, _, w, h) in self.bboxes])
+
+    #     # 归一化
+    #     confs_norm = (confs - confs.min()) / (confs.max() - confs.min() + 1e-6)
+    #     areas_norm = (areas - areas.min()) / (areas.max() - areas.min() + 1e-6)
+    #     quality = 0.7 * confs_norm + 0.3 * areas_norm
+
+    #     # 不做mask，直接加权平均
+    #     weights = quality / (quality.sum() + 1e-6)
+    #     mean_feature = np.sum(features * weights[:, None], axis=0)
+    #     mean_feature = mean_feature / (np.linalg.norm(mean_feature) + 1e-6)
+    #     self._mean_feature = mean_feature
+    #     return self._mean_feature
+
+    # # # output5
+    # def compute_mean_feature(self, method="hybrid_adaptive"):
+    #     if len(self.features) == 0:
+    #         return self._mean_feature
+
+    #     features = np.array(self.features)
+    #     if method == "hybrid_adaptive":
+    #         confs = np.array(self.conf)
+    #         areas = np.array([w*h for (_, _, w, h) in self.bboxes])
+    #         # 1. 归一化置信度和面积
+    #         confs_norm = (confs - confs.min()) / (confs.max() - confs.min() + 1e-6)
+    #         areas_norm = (areas - areas.min()) / (areas.max() - areas.min() + 1e-6)
+    #         # 2. 初步均值特征
+    #         mean_feat0 = features.mean(axis=0)
+    #         mean_feat0 = mean_feat0 / (np.linalg.norm(mean_feat0) + 1e-6)
+    #         # 3. 每帧与均值特征的余弦相似度
+    #         feats_norm = features / (np.linalg.norm(features, axis=1, keepdims=True) + 1e-6)
+    #         sims = feats_norm @ mean_feat0
+    #         sims_norm = (sims - sims.min()) / (sims.max() - sims.min() + 1e-6)
+    #         # 4. 帧间特征距离
+    #         dists = np.linalg.norm(features[1:] - features[:-1], axis=1)
+    #         dist_mean, dist_std = dists.mean(), dists.std()
+    #         abnormal_idx = np.where(dists > dist_mean + 2 * dist_std)[0] + 1
+    #         mask_dist = np.ones(len(features), dtype=bool)
+    #         mask_dist[abnormal_idx] = False
+    #         # 5. 多源分数融合
+    #         quality = 0.4 * confs_norm + 0.2 * areas_norm + 0.4 * sims_norm
+    #         # 剔除低于分数阈值的帧（如20分位）
+    #         thresh = np.percentile(quality, 20)
+    #         mask_quality = quality > thresh
+    #         # 合并mask
+    #         mask = mask_quality & mask_dist
+    #         features_sel = features[mask]
+    #         quality_sel = quality[mask]
+    #         # 6. 滑动窗口时序平滑
+    #         window_size = 5
+    #         smoothed_features = np.copy(features_sel)
+    #         for i in range(len(features_sel)):
+    #             l = max(0, i - window_size // 2)
+    #             r = min(len(features_sel), i + window_size // 2 + 1)
+    #             smoothed_features[i] = features_sel[l:r].mean(axis=0)
+    #         # 7. 多源分数加权融合
+    #         weights = quality_sel / (quality_sel.sum() + 1e-6)
+    #         mean_feature = np.sum(smoothed_features * weights[:, None], axis=0)
+    #         mean_feature = mean_feature / (np.linalg.norm(mean_feature) + 1e-6)
+    #         self._mean_feature = mean_feature
+    #         return self._mean_feature
+    #     # 保持原有逻辑
+    #     if method == "mean":
+    #         self._mean_feature = np.mean(self.features, axis=0)
+    #         self._mean_feature = self._mean_feature / (np.linalg.norm(self._mean_feature) + 1e-6)
+    #         return self._mean_feature
+    #     # 默认area_avg
+    #     self._mean_feature = np.zeros_like(self.features[0])
+    #     div = min(map(lambda x: x[2] * x[3], self.bboxes))
+    #     for i, f in enumerate(self.features):
+    #         area = self.bboxes[i][2] * self.bboxes[i][3]
+    #         self._mean_feature += f * (area / div)
+    #     norm = np.linalg.norm(self._mean_feature)
+    #     self._mean_feature = self._mean_feature / (norm + 1e-6)
+    #     return self._mean_feature
+
+    # output6
+    def compute_mean_feature(self, method="hybrid_adaptive"):
         if len(self.features) == 0:
             return self._mean_feature
-        self._mean_feature = np.zeros_like(self.features[0])
-        if method == "area_avg":
-            div = min(map(lambda x: x[2] * x[3], self.bboxes))
-        for i, f in enumerate(self.features):
-            if method == "area_avg":
-                area = self.bboxes[i][2] * self.bboxes[i][3]
-                self._mean_feature += f * (area / div)
-            else:
-                self._mean_feature += f
 
-        norm = np.linalg.norm(self._mean_feature)
-        self._mean_feature = self._mean_feature / norm
+        features = np.array(self.features)
+        confs = np.array(self.conf)
+        areas = np.array([w*h for (_, _, w, h) in self.bboxes])
+        confs_norm = (confs - confs.min()) / (confs.max() - confs.min() + 1e-6)
+        areas_norm = (areas - areas.min()) / (areas.max() - areas.min() + 1e-6)
+        mean_feat0 = features.mean(axis=0)
+        mean_feat0 = mean_feat0 / (np.linalg.norm(mean_feat0) + 1e-6)
+        feats_norm = features / (np.linalg.norm(features, axis=1, keepdims=True) + 1e-6)
+        sims = feats_norm @ mean_feat0
+        sims_norm = (sims - sims.min()) / (sims.max() - sims.min() + 1e-6)
+
+        # 只用置信度加权
+        # quality = confs_norm
+        # 只用特征一致性加权
+        # quality = sims_norm
+        # 多源加权
+        quality = 0.4 * confs_norm + 0.2 * areas_norm + 0.4 * sims_norm
+
+        # 不做剔除，直接加权平均
+        import scipy.special
+        weights = scipy.special.softmax(quality)
+        mean_feature = np.sum(features * weights[:, None], axis=0)
+        mean_feature = mean_feature / (np.linalg.norm(mean_feature) + 1e-6)
+        self._mean_feature = mean_feature
         return self._mean_feature
+
+    # def compute_mean_feature(self, method="area_avg"):
+    
+    #     if len(self.features) == 0:
+    #         return self._mean_feature
+    #     # 1. 原始ReID特征
+    #     reid_feat = np.zeros_like(self.features[0])
+    #     if method == "area_avg":
+    #         div = min(map(lambda x: x[2] * x[3], self.bboxes))
+    #     for i, f in enumerate(self.features):
+    #         if method == "area_avg":
+    #             area = self.bboxes[i][2] * self.bboxes[i][3]
+    #             reid_feat += f * (area / div)
+    #         else:
+    #             reid_feat += f
+    #     reid_feat = reid_feat / (np.linalg.norm(reid_feat) + 1e-6)
+
+    #     # print(f"[DEBUG] Track {self.track_id} static_attributes:", self.static_attributes)
+
+    #     # 2. 属性特征（如颜色、车型 one-hot 或概率分布）
+    #     attr_feat = []
+    #     if hasattr(self, "static_attributes") and self.static_attributes:
+    #         for k, v in self.static_attributes.items():
+    #             if isinstance(v, int):
+    #                 one_hot = np.zeros(len(STATIC_ATTRIBUTES[k]))
+    #                 one_hot[v] = 1
+    #                 attr_feat.append(one_hot)
+    #     if attr_feat:
+    #         attr_feat = np.concatenate(attr_feat)
+    #     else:
+    #         attr_feat = np.zeros(0)
+        
+    #     # print(f"[DEBUG] Track {self.track_id} attr_feat:", attr_feat)
+
+    #     # print(f"[DEBUG] Track {self.track_id} dynamic_attributes:", self.dynamic_attributes)
+
+    #     # # 3. 运动特征（如平均速度、方向等）
+    #     # motion_feat = []
+    #     # # if hasattr(self, "dynamic_attributes") and "speed" in self.dynamic_attributes:
+    #     # #     speed = np.array(self.dynamic_attributes["speed"])
+    #     # #     motion_feat = np.array([np.mean(speed), np.std(speed)])
+    #     # # if motion_feat is not None and len(motion_feat) > 0:
+    #     # #     motion_feat = np.array(motion_feat)
+    #     # # else:
+    #     # #     motion_feat = np.zeros(2)
+    #     # # 异常值剔除（阈值法）
+    #     # if hasattr(self, "dynamic_attributes") and "speed" in self.dynamic_attributes:
+    #     #     speed = np.array(self.dynamic_attributes["speed"])
+    #     #     # 异常值剔除（阈值法）
+    #     #     valid_speed = speed[(speed > 0) & (speed < 120)]
+    #     #     if len(valid_speed) == 0:
+    #     #         mean_speed, std_speed = 0, 0
+    #     #     else:
+    #     #         mean_speed = np.mean(valid_speed) / 120.0  # 归一化
+    #     #         std_speed = np.std(valid_speed) / 120.0
+    #     #     motion_feat = np.array([mean_speed, std_speed])
+    #     # else:
+    #     #     motion_feat = np.zeros(2)
+
+    #     # print(f"[DEBUG] Track {self.track_id} motion_feat:", motion_feat)
+
+    #     # 4. 融合
+    #     fused = np.concatenate([reid_feat, attr_feat])
+    #     self._mean_feature = fused / (np.linalg.norm(fused) + 1e-6)
+    #     return self._mean_feature
 
     def cluster_features(self, k):
         """Reduce the re-id features by K-means clustering."""

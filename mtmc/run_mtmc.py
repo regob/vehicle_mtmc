@@ -73,6 +73,7 @@ def run_mtmc(cfg: CN):
 if __name__ == "__main__":
     args = parse_args(
         "Run MTMC matching with MOT results already available on all cameras.")
+    # args.config = "config\cityflow\mtmc_s02.yaml"  # ← 新增这行
     cfg = get_cfg_defaults()
     if args.config:
         cfg.merge_from_file(os.path.join(cfg.SYSTEM.CFG_DIR, args.config))
@@ -124,3 +125,5 @@ if __name__ == "__main__":
         log.info("Evaluation successful.")
     else:
         log.error("Evaluation unsuccessful: probably EVAL config had some errors.")
+
+# python mtmc/run_mtmc.py --config cityflow/mtmc_s02.yaml

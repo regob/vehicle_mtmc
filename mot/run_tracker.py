@@ -388,6 +388,7 @@ def run_mot(cfg: CfgNode):
 
 if __name__ == "__main__":
     args = parse_args("Run Multi-object tracker on a video.")
+    # args.config = "cityflow\mot\mot_s02_c006.yaml"  
     cfg = get_cfg_defaults()
     if args.config:
         cfg.merge_from_file(os.path.join(cfg.SYSTEM.CFG_DIR, args.config))
@@ -406,3 +407,21 @@ if __name__ == "__main__":
                  args.log_level, not args.no_log_stdout)
 
     run_mot(cfg)
+
+
+#新建run_all_mot.sh
+# for cfg in config/cityflow/mot/mot_s01_c*.yaml; do
+#     echo "Processing $cfg"
+#     python -m mot.run_tracker --config "$cfg"
+# done
+
+# bash run_all_mot.sh
+
+# output/1/cityflow_s02_c006/mot.pkl
+# output/1/cityflow_s02_c007/mot.pkl
+# output/1/cityflow_s02_c008/mot.pkl
+# output/1/cityflow_s02_c009/mot.pkl
+
+# output2:  fused = np.concatenate([reid_feat, attr_feat])
+# output1:  fused = np.concatenate([reid_feat, attr_feat, motion_feat])
+# output:  fused = np.concatenate([reid_feat])
